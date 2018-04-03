@@ -77,3 +77,6 @@ datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
 }
 
 predictionResult <- PredictDataset(dataset)
+
+#Interval time on dataset
+timeInterval <- difftime(dataset[nrow(dataset),"Date.Time"], dataset[1,"Date.Time"], units = "hours")
