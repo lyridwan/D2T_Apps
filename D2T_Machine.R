@@ -76,4 +76,4 @@ datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
 	return(y)
 }
 
-predictionResult <- predictWeather(dataset)
+predictionResult <- PredictDataset(dataset)
