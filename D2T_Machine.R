@@ -58,23 +58,23 @@ dataset <- transform(dataset, Date = as.Date(as.character(Date), "%d/%m/%Y"))
 predictWeather<-function(dataset){
 drops <- c("Date")
 datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
-	i=1; n=length(dataCli)
+	i=1; n=length(datasetWithoutDate)
 	x<-list()
 	y<-matrix()
 	for(i in i:n){
 		#change dataset into time-series dataset (XTS)
-		x[[i]] <- xts(dataCli[[i]],dataClimates$Date)
+		x[[i]] <- xts(datasetWithoutDate[[i]],dataset$Date)
 		#forecast with (ETS)
 		y[i] <- forecast(x[[i]],h=1)$mean[1]
 	}
 	i=1
 	for(i in i:n){
-		names(y)[i]<-paste(colnames(dataCli[i]))
+		names(y)[i]<-paste(colnames(datasetWithoutDate[i]))
 	}
 	y<-t(y)
 	y<-data.frame(y)
 	return(y)
 }
 
-climatePredictionResult <- predictWeather(dataClimates)
+predictionResult <- predictWeather(dataset)
 
