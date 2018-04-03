@@ -55,7 +55,7 @@ dataset <- transform(dataset, Date = as.Date(as.character(Date), "%d/%m/%Y"))
 #Climate data prediction : Cloud Coverage,Average Temperature,Wind Speed,Wind Direction,Rainfall
 #drop date
 
-PredictWeather<-function(dataset){
+PredictDataset<-function(dataset){
 drops <- c("Date")
 datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
 	i=1; n=length(datasetWithoutDate)
