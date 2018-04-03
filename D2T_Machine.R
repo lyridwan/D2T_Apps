@@ -36,10 +36,6 @@ library(plotrix)
 
 dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
 
-#transform "Date" Variable from integer to date
-dataset <- transform(dataset, Date = as.Date(as.character(Date), "%d/%m/%Y"))
-
-
 #---------------------- Prediction with ETS and Gradient Descent ----------------------#
 #Climate data prediction : Cloud Coverage,Average Temperature,Wind Speed,Wind Direction
 
@@ -80,3 +76,43 @@ predictionResult <- PredictDataset(dataset)
 
 #Interval time on dataset
 timeInterval <- difftime(dataset[nrow(dataset),"Date.Time"], dataset[1,"Date.Time"], units = "hours")
+
+datasetColName <- c("")
+datasetSumValue <- c("")
+
+datasetMaxValue <- c("")
+datasetMaxIndex <- c("")
+datasetMaxDate <- c("")
+
+datasetMinValue <- c("")
+datasetMinIndex <- c("")
+datasetMinDate <- c("")
+
+
+i=2
+n=length(dataset)
+for(i in i:n){
+	datasetColName[i] <- colnames(dataset[i])
+
+	#MAX
+	datasetMaxValue[i] <- max(dataset[i])
+	max_index2 <- as.integer(which(dataset[i]==max(dataset[i])))
+	datasetMaxIndex[i] <- max_index2[1]
+	max_index0 <- max_index2[1]
+	datasetMaxDate[i] <- as.character(dataset$Date[max_index0])
+
+	#MIN
+	datasetMinValue[i] <- min(dataset[i])
+	min_index2 <- as.integer(which(dataset[i]==min(dataset[i])))
+	datasetMinIndex[i] <- min_index2[1]
+	min_index0 <- min_index2[1]
+	datasetMinDate[i] <- as.character(dataset$Date[min_index0])
+
+	#SUM
+	datasetSumValue[i] <- sum(dataset[,i])
+}
+
+datasetMax <- data.frame(datasetColName, datasetMaxDate, datasetMaxValue);
+datasetMin <- data.frame(datasetColName, datasetMinDate, datasetMinValue);
+datasetSum <- data.frame(datasetColName, datasetSumValue);
+datasetAverage <- data.frame(colMeans(dataset[2:6]));
