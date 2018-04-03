@@ -34,7 +34,7 @@ library(plotrix)
 #----------------------- Load and transform -----------------------#
 #Load dataset CLIMATE : Rainfall, Cloud Coverage, Temprature, Wind Speed, Wind Direction
 
-dataset <- read.table(file="Datasets/2016-2017.csv", sep=",", header=TRUE)
+dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
 
 #transform "Date" Variable from integer to date
 dataset <- transform(dataset, Date = as.Date(as.character(Date), "%d/%m/%Y"))
