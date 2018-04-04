@@ -1,0 +1,18 @@
+Category,Lower,Upper
+North,0,11.25
+North North East,11.25,33.75
+North East,33.75,56.25
+East North East,56.25,78.75
+East,78.75,101.25
+East South East,101.25,123.75
+South East,123.75,146.25
+South South East,146.25,168.75
+South,168.75,191.25
+South South West,191.25,213.75
+South West,213.75,236.25
+West South West,236.25,258.75
+West,258.75,281.25
+West North West,281.25,303.75
+North West,303.75,326.25
+North North West,326.25,348.75
+North,348.75,360

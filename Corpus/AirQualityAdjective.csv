@@ -1,0 +1,5 @@
+Category,Lower,Upper
+Good,0,50
+Admissible,51,101
+Bad,101,301
+Hazzardous,301,500

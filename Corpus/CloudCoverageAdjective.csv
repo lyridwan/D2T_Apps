@@ -1,0 +1,8 @@
+Category,Lower,Upper
+Clear,0,11
+Foggy,11,21
+Mostly sunny,21,31
+Partly cloudy,31,51
+Mostly cloudy,51,71
+Broken,71,81
+Overcast,81,100
