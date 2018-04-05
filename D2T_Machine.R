@@ -34,13 +34,14 @@ library(plotrix)
 #----------------------- Load and transform -----------------------#
 #Load dataset CLIMATE : Rainfall, Cloud Coverage, Temprature, Wind Speed, Wind Direction
 
-dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
+dataset <- read.table(file="Datasets/2016-2017.csv", sep=",", header=TRUE)
+# dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
 
 #---------------------- Prediction with ETS and Gradient Descent ----------------------#
 #Climate data prediction : Cloud Coverage,Average Temperature,Wind Speed,Wind Direction
 
-#drops <- c("Date")
-#datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
+# drops <- c("Date")
+# datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
 
 #-------------------------------------------------------------------------------#
 #------------------------------- SIGNAL ANALYSIS -------------------------------
@@ -52,14 +53,14 @@ dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
 #drop date
 
 PredictDataset<-function(dataset){
-drops <- c("Date")
+drops <- c("Date.Time")
 datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
 	i=1; n=length(datasetWithoutDate)
 	x<-list()
 	y<-matrix()
 	for(i in i:n){
 		#change dataset into time-series dataset (XTS)
-		x[[i]] <- xts(datasetWithoutDate[[i]],dataset$Date)
+		x[[i]] <- xts(datasetWithoutDate[[i]],order.by=as.POSIXct(dataset$Date.Time))
 		#forecast with (ETS)
 		y[i] <- forecast(x[[i]],h=1)$mean[1]
 	}
@@ -79,6 +80,7 @@ timeInterval <- difftime(dataset[nrow(dataset),"Date.Time"], dataset[1,"Date.Tim
 
 datasetColName <- c("")
 datasetSumValue <- c("")
+datasetAverage <- c("")
 
 datasetMaxValue <- c("")
 datasetMaxIndex <- c("")
@@ -109,13 +111,33 @@ for(i in i:n){
 	datasetMinDate[i] <- as.character(dataset$Date[min_index0])
 
 	#SUM
-	datasetSumValue[i] <- sum(dataset[,i])
+  datasetSumValue[i] <- sum(dataset[,i])
+
+  #AVERAGE
+	datasetAverage[i] <- mean(dataset[,i])
 }
 
-datasetMax <- data.frame(datasetColName, datasetMaxDate, datasetMaxValue);
-datasetMin <- data.frame(datasetColName, datasetMinDate, datasetMinValue);
-datasetSum <- data.frame(datasetColName, datasetSumValue);
-datasetAverage <- data.frame(colMeans(dataset[2:6]));
+
+datasetStatistical <- data.frame(datasetColName, datasetMaxDate, datasetMaxValue, datasetMaxIndex, datasetMinDate, datasetMinValue, datasetMinIndex, datasetSumValue, datasetAverage);
+
+rm(datasetColName)
+rm(datasetSumValue)
+rm(datasetAverage)
+rm(datasetMaxValue)
+rm(datasetMaxIndex)
+rm(datasetMaxDate)
+rm(datasetMinValue)
+rm(datasetMinIndex)
+rm(datasetMinDate)
+rm(max_index0)
+rm(max_index2)
+rm(min_index0)
+rm(min_index2)
+#rm(datasetWithoutDate)
+
+# datasetMin <- data.frame(datasetColName, datasetMinDate, datasetMinValue);
+# datasetSum <- data.frame(datasetColName, datasetSumValue);
+# datasetAverage <- data.frame(colMeans(dataset[2:6]));
 
 AirQualityCalculation <- function (dataset){
   #menghitung sub-index value dari variabel PM25
