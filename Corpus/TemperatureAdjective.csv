@@ -1,6 +1,6 @@
-Category,Interval
-very cold,0 0 5 10
-cold,5 10 15 20
-warm,15 20 25 30
-hot,25 30 35 40
-very hot,35 40 45 50
+Category,v1,v2,v3,v4
+very cold,0,0,5,10
+cold,5,10,15,20
+warm,15,20,25,30
+hot,25,30,35,40
+very hot,35,40,45,50

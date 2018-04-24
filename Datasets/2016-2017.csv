@@ -1,4 +1,4 @@
-Date Time,Cloud Coverage,Average Temperature,Wind Speed,Wind Direction,Rainfall
+DateTime,CloudCoverage,Temperature,WindSpeed,WindDirection,Rainfall
 2016-07-06 00:00:00,40.8,21.3,5.47,315,0
 2016-07-07 00:00:00,20.9,20.1,6.41,315,0
 2016-07-08 00:00:00,27.2,19.5,7.02,315,0
