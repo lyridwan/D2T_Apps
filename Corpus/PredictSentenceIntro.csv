@@ -1,0 +1,14 @@
+Category,Lower,Upper
+Calm,0,2
+Light Air,2,5
+Light Breeze,6,11
+Gentle Breeze,12,19
+Moderate Breeze,20,29
+Fresh Breeze,30,39
+Strong Breeze,40,50
+Near Gale,51,61
+Gale,62,74
+Strong Gale,74,87
+Storm,88,102
+Violent Storm,103,118
+Hurricane,119,130

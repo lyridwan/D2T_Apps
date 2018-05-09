@@ -1,5 +1,5 @@
  #Data-to-text System - Ahmad - Ridwan
-setwd("~/GitHub/D2T_Apps")
+# setwd("~/GitHub/D2T_Apps")
 #----------------------- Packages Requirement -----------------------#
 #1. Shiny R
 # install.packages(shiny) #-- server & GUI
@@ -27,16 +27,16 @@ library(plotrix)
 
 #5. ade4
 #install.packages(ade4)
-library(ade4)
+# library(ade4)
 
 #-----------------------------------------------------------------#
 
 #----------------------- Load and transform -----------------------#
 #Load dataset CLIMATE : Rainfall, Cloud Coverage, Temprature, Wind Speed, Wind Direction
 
-dataset <- read.table(file="Datasets/2016-2017.csv", sep=",", header=TRUE)
-airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
-columnName <- colnames(dataset[ , colnames(dataset) != "DateTime"])
+# dataset <- read.table(file="Datasets/2016-2017.csv", sep=",", header=TRUE)
+# airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
+# columnName <- colnames(dataset[ , colnames(dataset) != "DateTime"])
 # dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
 
 #---------------------- Prediction with ETS and Gradient Descent ----------------------#
@@ -56,13 +56,15 @@ columnName <- colnames(dataset[ , colnames(dataset) != "DateTime"])
 
 PredictDataset<-function(dataset){
 drops <- c("DateTime")
-datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
-	i=1; n=length(datasetWithoutDate)
+# datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
+	datasetWithoutDate <- dataset[, names(dataset) != "DateTime"]
+  i=1; n=length(datasetWithoutDate)
 	x<-list()
 	y<-matrix()
 	for(i in i:n){
 		#change dataset into time-series dataset (XTS)
-		x[[i]] <- xts(datasetWithoutDate[[i]],order.by=as.POSIXct(dataset$Date.Time))
+    x[[i]] <- xts(datasetWithoutDate[[i]],order.by=as.POSIXct(dataset$DateTime))
+		# x[[i]] <- xts(datasetWithoutDate[[i]],as.POSIXct(strptime(dataset$DateTime, "%Y-%m-%d %H:%M:%S")))
 		#forecast with (ETS)
 		y[i] <- forecast(x[[i]],h=1)$mean[1]
 	}
@@ -75,10 +77,10 @@ datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
 	return(y)
 }
 
-predictionResult <- PredictDataset(dataset)
+# predictionResult <- PredictDataset(dataset)
 
-#Interval time on dataset
-timeInterval <- difftime(dataset[nrow(dataset),"Date.Time"], dataset[1,"Date.Time"], units = "hours")
+# #Interval time on dataset
+# timeInterval <- difftime(dataset[nrow(dataset),"Date.Time"], dataset[1,"Date.Time"], units = "hours")
 
 StatisticalAnalysis <- function(dataset){
   ColName <- SumValue <- Average <- MaxValue <- MaxIndex <- MaxDate <- MinValue <- MinIndex <- MinDate <- c("")
@@ -112,28 +114,28 @@ StatisticalAnalysis <- function(dataset){
   return(datasetStatistical) 
 }
 
-cat("------------        N-1 Dataset       -----------\n\n")
-datasetYesterday <- dataset[nrow(dataset)-1, !colnames(dataset)== "DateTime"]
-cat("------------        Last Dataset       -----------\n\n")
-datasetToday <- dataset[nrow(dataset), !colnames(dataset)== "DateTime"]
-cat("------------        LAST 2 MONTH AVERAGE       -----------\n\n")
-averageLast2Month <- as.data.frame.list(colMeans(dataset[(NROW(dataset)-60):(NROW(dataset)-30) , colnames(dataset) != "DateTime"]))
-print(averageLast2Month);
-cat("------------        LAST MONTH AVERAGE       -----------\n\n")
-averageLastMonth <- as.data.frame.list(colMeans(dataset[(NROW(dataset)-30):NROW(dataset) , colnames(dataset) != "DateTime"]))
-print(averageLastMonth);
-cat("------------        YEAR AVERAGE       -----------\n\n")
-averageYear <- as.data.frame.list(colMeans(dataset[, colnames(dataset) != "DateTime"]))
-print(averageYear);
-cat("------------        LAST 2 MONTH SUMMARY       -----------\n\n")
-statisticalLast2Month <- StatisticalAnalysis(dataset[(NROW(dataset)-60):(NROW(dataset)-30) , ])
-print(statisticalLast2Month);
-cat("------------        LAST MONTH SUMMARY       -----------\n\n")
-statisticalLastMonth <- StatisticalAnalysis(dataset[(NROW(dataset)-30):NROW(dataset) , ])
-print(statisticalLastMonth);
-cat("------------        YEAR SUMMARY       -----------\n\n")
-statisticalYear <- StatisticalAnalysis(dataset)
-print(statisticalYear);
+# cat("------------        N-1 Dataset       -----------\n\n")
+# datasetYesterday <- dataset[nrow(dataset)-1, !colnames(dataset)== "DateTime"]
+# cat("------------        Last Dataset       -----------\n\n")
+# datasetToday <- dataset[nrow(dataset), !colnames(dataset)== "DateTime"]
+# cat("------------        LAST 2 MONTH AVERAGE       -----------\n\n")
+# averageLast2Month <- as.data.frame.list(colMeans(dataset[(NROW(dataset)-60):(NROW(dataset)-30) , colnames(dataset) != "DateTime"]))
+# print(averageLast2Month);
+# cat("------------        LAST MONTH AVERAGE       -----------\n\n")
+# averageLastMonth <- as.data.frame.list(colMeans(dataset[(NROW(dataset)-30):NROW(dataset) , colnames(dataset) != "DateTime"]))
+# print(averageLastMonth);
+# cat("------------        YEAR AVERAGE       -----------\n\n")
+# averageYear <- as.data.frame.list(colMeans(dataset[, colnames(dataset) != "DateTime"]))
+# print(averageYear);
+# cat("------------        LAST 2 MONTH SUMMARY       -----------\n\n")
+# statisticalLast2Month <- StatisticalAnalysis(dataset[(NROW(dataset)-60):(NROW(dataset)-30) , ])
+# print(statisticalLast2Month);
+# cat("------------        LAST MONTH SUMMARY       -----------\n\n")
+# statisticalLastMonth <- StatisticalAnalysis(dataset[(NROW(dataset)-30):NROW(dataset) , ])
+# print(statisticalLastMonth);
+# cat("------------        YEAR SUMMARY       -----------\n\n")
+# statisticalYear <- StatisticalAnalysis(dataset)
+# print(statisticalYear);
 
 #rm(datasetWithoutDate)
 # datasetMin <- data.frame(datasetColName, datasetMinDate, datasetMinValue);
@@ -293,7 +295,7 @@ Date: 4th April 2018 8:17 AM
 Data Interpret Function"
 #-------------------------------  DATA INTERPRETATION -------------------------------
 
-AQValue <- AirQualityCalculation(airQualityDataset[1,]);
+# AQValue <- AirQualityCalculation(airQualityDataset[1,]);
 
 
 MembershipClassifier <- function(value, corpus){
@@ -352,7 +354,7 @@ MembershipFuzzy <- function(value, corpus){
 --Input: value=25, type='AirQuality'
 --Output: Good
 "
-DataInterpreterAdjective <- function(value, type="General"){
+DataInterpreterAdjective <- function(value, type="General",statisticalResume){
   if(type == "AirQuality" || 
      type == "WindSpeed" || 
      type == "WindDirection" || 
@@ -366,47 +368,239 @@ DataInterpreterAdjective <- function(value, type="General"){
       result <- MembershipClassifier(value, corpus);
     }
   }else{
-    result<- "Not available for general"
-    ##corpus <- read.table(file="Corpus/GeneralAdjective.csv", sep=",", header=TRUE)
-    ##result <- MembershipFuzzy(value, corpus);
+    corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
+    maxRange <- as.double(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
+    minRange <- as.double(statisticalResume[statisticalResume$ColName == type,"MinValue"])
+
+    if(minRange == maxRange){
+      result <- "Constant"
+    }else{
+      n = length(corpus)
+      node = (2*n)+n-1
+
+      rangenode = (maxRange-minRange)/node
+
+      i=1
+      j=0
+      membershipValue <- c()
+      for (i in i:n) {
+        if(i == 1){
+          v1<-minRange;
+          v2<-minRange;
+          v3<-minRange+(2*rangenode);
+          v4<-minRange+(3*rangenode);
+          
+          ##/ ¯ \ <- 1st area, 2nd area, 3rd area
+          #first area
+          if((value>=v1)&&(value<=v2)){
+            membershipValue[i] <- (  (value-v1) / (v2-v1)  );
+          #second area (optimum)
+          }else if((value>v2)&&(value<=v3)){
+            membershipValue[i] <- 1;
+          #third area
+          }else if((value>v3)&&(value<=v4)){
+            membershipValue[i] <- (  (v4-value) / (v4-v3)  );
+          #fourth, default condition (outside)
+          }else{
+            membershipValue[i] <- 0;
+          }
+          j <- i+1
+        }else{
+          v1<-minRange+(j)*rangenode;
+          v2<-minRange+(j+1)*rangenode;
+          v3<-minRange+(j+3)*rangenode;
+          v4<-minRange+(j+4)*rangenode;
+          
+          ##/ ¯ \ <- 1st area, 2nd area, 3rd area
+          #first area
+          if((value>=v1)&&(value<=v2)){
+            membershipValue[i] <- (  (value-v1) / (v2-v1)  );
+          #second area (optimum)
+          }else if((value>v2)&&(value<=v3)){
+            membershipValue[i] <- 1;
+          #third area
+          }else if((value>v3)&&(value<=v4)){
+            membershipValue[i] <- (  (v4-value) / (v4-v3)  );
+          #fourth, default condition (outside)
+          }else{
+            membershipValue[i] <- 0;
+          }
+          j <- j+3
+        }
+      }
+
+      # result <- corpus[2, "Category"]
+      result <- corpus[which.max(membershipValue), "Category"]
+      # result<- paste("Not available for general -aa",which.max(membershipValue))
+      ##corpus <- read.table(file="Corpus/GeneralAdjective.csv", sep=",", header=TRUE)
+      ##result <- MembershipFuzzy(value, corpus);
+    }
+
+    
   }
   
   # print(result)
   return(result)
 }
 
-DataIntepreter <- function(dataset){
+DataInterpreter <- function(dataset,statisticalResume){
   i <- 1;
   n <- length(dataset);
   interpreterResult <- dataset;
   for(i in i:n){
-    interpreterResult[i] <- DataInterpreterAdjective(dataset[i], type = names(dataset[i]))
+    interpreterResult[i] <- DataInterpreterAdjective(dataset[i], type = names(dataset[i]), statisticalResume)
     # print(DataInterpreterAdjective(dataset[i], type = names(dataset[i])))
   }
   
-  print(interpreterResult)
+  # print(interpreterResult)
   return(interpreterResult)
 }
 
 
-interpreterResultYesterday <-DataIntepreter(datasetYesterday)
-interpreterResultToday <-DataIntepreter(datasetToday)
-interpreterResultLast2Month <- DataIntepreter(averageLast2Month)
-interpreterResultLastMonth <- DataIntepreter(averageLastMonth)
-interpreterResultYear <- DataIntepreter(averageYear)
+# interpreterResultYesterday <-DataIntepreter(datasetYesterday)
+# interpreterResultToday <-DataIntepreter(datasetToday)
+# interpreterResultLast2Month <- DataIntepreter(averageLast2Month)
+# interpreterResultLastMonth <- DataIntepreter(averageLastMonth)
+# interpreterResultYear <- DataIntepreter(averageYear)
  # dummyCorpus <- read.table(file=paste0("Corpus/","Rainfall","Adjective.csv"), sep=",", header=TRUE)
 # result <- MembershipFuzzy(10, dummyCorpus);
 #result <- DataInterpreterAdjective(yesterdayDataset[1], type = names(yesterdayDataset[1]))
 
-cat("------------ Data Interpretation Output -----------\n\n")
-cat("------------ Yesterday -----------\n\n")
-for(i in 1:length(columnName)){
-  cat(" Yesterday ", columnName[i], ": ", as.character(unlist(interpreterResultYesterday[i])),"\n\n")
+# cat("------------ Data Interpretation Output -----------\n\n")
+# cat("------------ Yesterday -----------\n\n")
+# for(i in 1:length(columnName)){
+#   cat(" Yesterday ", columnName[i], ": ", as.character(unlist(interpreterResultYesterday[i])),"\n\n")
+# }
+
+# cat("------------ Data Interpretation Output -----------\n\n")
+# cat("------------ Today -----------\n\n")
+# for(i in 1:length(columnName)){
+#   cat(" Today ", columnName[i], ": ", as.character(unlist(interpreterResultToday[i])),"\n\n")
+# }
+
+SubstrRight <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
+  }
+
+Ordinal_indicator <- function(num){
+  if(num==11){
+    oi<-"th"
+    return(oi)
+  }
+  x<-nchar(num)
+  y<-substrRight(num,1)
+  oi<-""
+  if(y==1){
+    oi<-"st"
+  }
+  else if(y==2){
+    oi<-"nd"
+  }
+  else if(y==3){
+    oi<-"rd"
+  }
+  else{
+    oi<-"th"
+  }
+  return(oi)
 }
 
-cat("------------ Data Interpretation Output -----------\n\n")
-cat("------------ Today -----------\n\n")
-for(i in 1:length(columnName)){
-  cat(" Today ", columnName[i], ": ", as.character(unlist(interpreterResultToday[i])),"\n\n")
+ReadIntro <- function(source="Data", type="General"){
+  type
+  if(type == "Current" || 
+     type == "Trend" || type == "Event" ||
+     type == "Predict"){
+    corpus <- as.matrix(read.table(file=paste0("Corpus/",type,"Intro.csv"), header=FALSE, sep=';'))
+    # print(corpus)
+    n <- length(corpus)
+    random_value <- as.integer(runif(1,1,n))
+
+    result <- corpus[random_value]
+    return (result)
+  }else{
+    return("Woops no data intro!");
+  }
+    # return("Woops no data intro!");
 }
+
+ReadResumeIntro <- function(dataset, ColName, source="dataset"){
+  
+  corpus <- as.matrix(read.table(file=paste0("Corpus/",type,"Intro.csv"), header=FALSE, sep=';'))
+
+  
+   
+  #Randoming corpus
+  n <- length(corpus)
+  random_value <- as.integer(runif(1,1,n))
+  result <- corpus[random_value]
+
+  #Replaceing Data Source
+  result <- gsub("@source", "dataset", result)
+
+  #Replacing Data Range
+  date1 <- dataset[1, ]
+  date2 <- dataset[nrow(dataset),]
+  result <- gsub("@date1", date1, result)
+  result <- gsub("@date2", date2, result)
+
+  #Replacing prural identifier
+  if(length(ColName) == 1){
+    result <- gsub("parameter@s", "parameter:", result)
+  }else{
+    result <- gsub("parameter@s", "parameters:", result)
+  }
+
+  #Replacing Parameter with array
+  param <- ""
+  i <- 2
+  for (i in i:length(ColName)-1) {
+    if(i == 1){
+      param <- paste0(param,ColName[i])
+    }
+    else{
+      param <- paste0(param,",",ColName[i])
+    }
+  # print(param)
+  }
+  param <- paste(param,"and",ColName[i+1])
+  result <- gsub("@param", param, result)
+
+  return (result)
+}
+
+
+ResumeTrend <- function(){
+
+}
+ResumeIntroSentence <- function(){
+
+}
+ResumeEvent <- function(){
+
+}
+
+CurrentIntro <- function(){
+
+}
+CurrentDesc <- function(){
+
+}
+CurrentAglast <- function(){
+
+}
+CurrentAgresume <- function(){
+
+}
+
+PredictIntro <- function(){
+
+}
+PredictContent <- function(){
+
+}
+PredictConc <- function(){
+
+}
+
+
 
