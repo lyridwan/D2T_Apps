@@ -30,6 +30,16 @@ averageResume <- as.data.frame.list(colMeans(dataset[, !colnames(dataset) == "Da
 # Statistical Resume
 statisticalResume <- StatisticalAnalysis(dataset)
 
+i <- 1
+vectorTrendAnalysisResult <- c()
+for(i in i:length(datasetWithoutDate)){
+  vectorColumn <- datasetWithoutDate[[i]]
+  vectorTrendAnalysisResult[i] <- TrendAnalysis(1, vectorColumn)
+}
+
+#merging DF with trend column
+statisticalResume$Trend <- vectorTrendAnalysisResult
+
 # DATA INTERPRETATION
 interpreterNow <- DataInterpreter(datasetNow,statisticalResume)
 interpreterLast <- DataInterpreter(datasetLast,statisticalResume)
@@ -56,7 +66,7 @@ interpreterResume <- DataInterpreter(averageResume,statisticalResume)
 
 resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName)
 trendIntro <- ReadIntro(type="Trend")
-resumeTrend <- paste(trendIntro,"TREND TREND aaaaaaa")
+resumeTrend <- paste(trendIntro,ResumeTrend(statisticalResume))
 
 eventIntro <- ReadIntro(type="Event")
 resumeEvent <- paste(eventIntro,"6 value from Xth to Yth")
@@ -72,15 +82,7 @@ predictContent <- "Content content content."
 predictConc <- "Conclussion from predict result."
 
 
-i <- 1
-vectorTrendAnalysisResult <- c()
-for(i in i:length(datasetWithoutDate)){
-  vectorColumn <- datasetWithoutDate[[i]]
-  vectorTrendAnalysisResult[i] <- TrendAnalysis(1, vectorColumn)
-}
 
-#merging DF with trend column
-statisticalResume$Trend <- vectorTrendAnalysisResult
 
 resumeResult <- paste(resumeIntro, resumeTrend, resumeEvent)
 # currentResult <- paste(currentIntro, currentDesc, currentAglast, currentAgresume)

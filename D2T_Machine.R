@@ -617,8 +617,188 @@ ChangeTimeDesc <- function(source, dataset, type = "0"){
   return (result)
 }
 
-ResumeTrend <- function(){
-
+ResumeTrend <- function(statisticalResume){
+  freq <- table(statisticalResume["Trend"])
+  result <- ""
+  
+  #FIRST CONDITION
+  if(freq["+"] <= freq["-"] && freq["+"] <= freq["0"]){
+    if(freq["-"] < freq["0"]){
+      #1ST GROUP
+      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+      i<-1
+      n <- nrow(listTrend)
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is increased", "but ")
+      
+      #2ND GROUP
+      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+      i<-1
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is decreased and the rest is constant.")
+    }else{
+      #1ST GROUP
+      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+      i<-1
+      n <- nrow(listTrend)
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is increased", "and ")
+      
+      #2ND GROUP
+      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+      i<-1
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is constant but the rest is decreased.")
+    }
+  #SECOND CONDITION
+  }else if(freq["-"] <= freq["+"] && freq["-"] <= freq["0"]){
+    if(freq["+"] < freq["0"]){
+      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+      i<-1
+      n <- nrow(listTrend)
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is decreased", "but ")
+      
+      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+      i<-1
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is increased and the rest is constant.")
+    }else{
+      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+      i<-1
+      n <- nrow(listTrend)
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is decreased", "and ")
+      
+      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+      i<-1
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is constant but the rest is increased")
+    }
+  }else if(freq["0"] <= freq["-"] && freq["0"] <= freq["+"]){
+    if(freq["+"] < freq["-"]){
+      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+      i<-1
+      n <- nrow(listTrend)
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is constant", "and ")
+      
+      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+      i<-1
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is increased and the rest is decreased.")
+    }else{
+      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+      i<-1
+      n <- nrow(listTrend)
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is constant", "and ")
+      
+      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+      i<-1
+      for(i in i:n){
+        if(i==1){
+          result <- paste0(result,listTrend[i,"ColName"])
+          
+        }else{
+          result <- paste0(",",result,listTrend[i,"ColName"])
+        }
+      }
+      
+      result <- paste(result, "trend is decreased but the rest is increased")
+    }
+  }
+  
+  return(result)
+    
 }
 ResumeIntroSentence <- function(){
 
@@ -679,7 +859,7 @@ TrendAnalysis <- function(start,dataset){
 	# Dataset is vector, pokonamah ka gigir
   dataset <- dataset[start:length(dataset)]
   if(length(unique(dataset)) == 1){
-  	result <- "Stable"
+  	result <- "0"
   }else{
 	  x = c(1:length(dataset))  
 	  plot(x, dataset)
@@ -687,11 +867,9 @@ TrendAnalysis <- function(start,dataset){
 
 	  reg = lm(dataset~x)
 	  if(reg$coefficients["x"] > 0 ){
-	    result <- "Increase"
+	    result <- "+"
 	  }else if(reg$coefficients["x"] < 0){
-	    result <- "Decrease"
-	  }else{
-	    result <- "Stable"
+	    result <- "-"
 	  }
   
 	  # print(reg)
