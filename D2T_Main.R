@@ -52,7 +52,6 @@ interpreterResume <- DataInterpreter(averageResume,statisticalResume)
 # }
 
 
-source("dummy2.R", local = TRUE)
 resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName)
 trendIntro <- ReadIntro(type="Trend")
 resumeTrend <- paste(trendIntro,"TREND TREND aaaaaaa")
@@ -62,9 +61,9 @@ resumeEvent <- paste(eventIntro,"6 value from Xth to Yth")
 
 
 currentIntro <- ChangeTimeDesc(ReadIntro(type="Current"),dataset["DateTime"])
-currentDesc <- CurrentDesc(interpreterLast)
-currentAglast <- TrendAnalysis(length(dataset)-5, dataset)
-currentAgresume <- "and now is the higest from overall."
+currentDesc <- CurrentDesc(interpreterNow, statisticalResume, dataset)
+# currentAglast <- TrendAnalysis(length(dataset)-5, dataset[[2]])
+# currentAgresume <- "and now is the higest from overall."
 
 predictIntro <- ReadIntro(type="Predict")
 predictContent <- "Content content content."
@@ -72,7 +71,8 @@ predictConc <- "Conclussion from predict result."
 
 resumeResult <- paste(resumeIntro, resumeTrend, resumeEvent)
 
-currentResult <- paste(currentIntro, currentDesc, currentAglast, currentAgresume)
+# currentResult <- paste(currentIntro, currentDesc, currentAglast, currentAgresume)
+currentResult <- paste(currentIntro, currentDesc)
 
 predictResult <- paste(predictIntro, predictContent, predictConc)
 

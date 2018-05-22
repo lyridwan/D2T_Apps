@@ -1,3 +1,4 @@
+
 #Data-to-text System - Ahmad - Ridwan
 # setwd("~/GitHub/D2T_Apps")
 #----------------------- Packages Requirement -----------------------#
@@ -372,17 +373,22 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume){
     maxRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
     minRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MinValue"])
 
+    corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
+    maxRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MaxValue"])
+    minRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MinValue"])
+
     maxRange <- as.double(maxRange)
     minRange <- as.double(minRange)
 
     if(minRange == maxRange){
       result <- "Constant"
     }else{
-      n = length(corpus)
+      n = nrow(corpus)
       node = (2*n)+n-1
 
       rangenode = (maxRange-minRange)/node
 
+      value <- 7
       i=1
       j=0
       membershipValue <- c()
@@ -571,7 +577,7 @@ ReadResumeIntro <- function(dataset, ColName, source="dataset"){
   return (result)
 }
 
-ChangeTimeDesc <- function(source, dataset){
+ChangeTimeDesc <- function(source, dataset, type = "0"){
   n <- nrow(dataset)
   timeFirst <- as.character(dataset[n-1,'DateTime'])
   timeLast <- as.character(dataset[n,'DateTime'])
@@ -584,10 +590,19 @@ ChangeTimeDesc <- function(source, dataset){
   dayData <- as.character(dataset[length(dataset),'DateTime'])
   dayData <- strptime(dayData, "%Y/%m/%d")
   same <- 0
-  if(now == dayData){
-    same <- 1
+  
+  if(type == "0"){
+	  if(now == dayData){
+	    same <- 1
+	  }else{
+	    same <- 0
+	  }
   }else{
-    same <- 0
+  	if(now == dayData){
+	    same <- 1
+ 	}else{
+		same <- 2
+	}
   }
 
   difTime <- as.numeric(timeLast-timeFirst,units="secs")
@@ -610,17 +625,29 @@ ResumeEvent <- function(){
 
 }
 
-CurrentDesc <- function(interpreterLast){
+CurrentDesc <- function(interpreterNow,statisticalResume, dataset){
   result <- ''
   i <- 1
-  for (i in i:length(interpreterLast)) {
-    if(i == 1 || i == length(interpreterLast)){  
-      result <- paste0(result, colnames(interpreterLast[i])," is ",interpreterLast[1,i])
-    }else if(i == length(interpreterLast)-1){
-      result <- paste0(result,", ", colnames(interpreterLast[i])," is ",interpreterLast[1,i]," and ")
+  for (i in i:length(interpreterNow)) {
+    if(i == 1 || i == length(interpreterNow)){  
+      result <- paste0(result, colnames(interpreterNow[i])," is ",interpreterNow[1,i])
     }else{
-      result <- paste0(result,", ", colnames(interpreterLast[i])," is ",interpreterLast[1,i])
+      result <- paste0(result,", ", colnames(interpreterNow[i])," is ",interpreterNow[1,i])
     }
+
+    if(as.character(statisticalResume[statisticalResume$ColName == colnames(interpreterNow[i]),"MaxIndex"]) == as.character(nrow(dataset))){
+      result <- paste0(result," this is the highest value of @TimeDesc ")
+	}else if(as.character(statisticalResume[statisticalResume$ColName == colnames(interpreterNow[i]),"MinIndex"]) == as.character(nrow(dataset))){
+      result <- paste0(result," this is the lowest value of @TimeDesc ")
+	}
+
+	if(i == length(interpreterNow)-1){
+      result <- paste0(result," and ")
+    }
+  }
+
+  if(grepl("@TimeDesc",result)){
+  	result <- ChangeTimeDesc(result, dataset["DateTime"], type="other")
   }
 
   return(result)
