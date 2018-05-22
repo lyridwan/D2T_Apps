@@ -589,7 +589,7 @@ ChangeTimeDesc <- function(source, dataset, type = "0"){
 
   now <- as.character(Sys.time())
   now <- strptime(now, "%Y-%m-%d")
-  dayData <- as.character(dataset[length(dataset),'DateTime'])
+  dayData <- as.character(dataset[nrow(dataset),'DateTime'])
   dayData <- strptime(dayData, "%Y/%m/%d")
   same <- 0
   
