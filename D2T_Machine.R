@@ -83,33 +83,35 @@ drops <- c("DateTime")
 # timeInterval <- difftime(dataset[nrow(dataset),"Date.Time"], dataset[1,"Date.Time"], units = "hours")
 
 StatisticalAnalysis <- function(dataset){
+  datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
   ColName <- SumValue <- Average <- MaxValue <- MaxIndex <- MaxDate <- MinValue <- MinIndex <- MinDate <- c("")
   
-  i=2
-  n=length(dataset)
+  i=1
+  n=length(datasetWithoutDate)
   for(i in i:n){
-    ColName[i] <- colnames(dataset[i])
+    ColName[i] <- colnames(datasetWithoutDate[i])
     
     #MAX
-    MaxValue[i] <- max(dataset[i])
-    max_index2 <- as.integer(which(dataset[i]==max(dataset[i])))
+    MaxValue[i] <- max(datasetWithoutDate[i])
+    max_index2 <- as.integer(which(datasetWithoutDate[i]==max(datasetWithoutDate[i])))
     MaxIndex[i] <- max_index2[1]
     max_index0 <- max_index2[1]
     MaxDate[i] <- as.character(dataset$Date[max_index0])
     
     #MIN
-    MinValue[i] <- min(dataset[i])
-    min_index2 <- as.integer(which(dataset[i]==min(dataset[i])))
+    MinValue[i] <- min(datasetWithoutDate[i])
+    min_index2 <- as.integer(which(datasetWithoutDate[i]==min(datasetWithoutDate[i])))
     MinIndex[i] <- min_index2[1]
     min_index0 <- min_index2[1]
     MinDate[i] <- as.character(dataset$Date[min_index0])
     
     #SUM
-    SumValue[i] <- sum(dataset[,i])
+    SumValue[i] <- sum(datasetWithoutDate[,i])
     
     #AVERAGE
-    Average[i] <- mean(dataset[,i])
+    Average[i] <- mean(datasetWithoutDate[,i])
   }
+  
   datasetStatistical <- data.frame(ColName, MaxDate, MaxValue, MaxIndex, MinDate, MinValue, MinIndex, SumValue, Average);
   return(datasetStatistical) 
 }
@@ -643,11 +645,20 @@ PredictConc <- function(){
 }
 
 TrendAnalysis <- function(start,dataset){
-  sequence = c(start:length(dataset))  
-  plot(sequence, dataset)
-  reg = lm(dataset~sequence)
-  abline(reg,col="red")
+  x = c(start:length(dataset))  
+  #plot(sequence, dataset)
   
-  return(reg)
+  reg = lm(dataset~x)
+  if(reg$coefficients["x"] > 0 ){
+    result <- "Increase"
+  }else if(reg$coefficients["x"] < 0){
+    result <- "Decrease"
+  }else{
+    result <- "Stable"
+  }
+  
+  # abline(reg,col="red")
+  
+  return(result)
 }
 
