@@ -643,6 +643,10 @@ CurrentDesc <- function(interpreterNow,statisticalResume, dataset){
       result <- paste0(result," this is the lowest value of @TimeDesc ")
 	}
 
+	trendLastFive <- TrendAnalysis(nrow(dataset)-3, dataset[[colnames(interpreterNow[i])]])
+	
+  	result <- paste0(result," trend in last 3 data is ",trendLastFive)
+
 	if(i == length(interpreterNow)-1){
       result <- paste0(result," and ")
     }
@@ -672,19 +676,27 @@ PredictConc <- function(){
 }
 
 TrendAnalysis <- function(start,dataset){
-  x = c(start:length(dataset))  
-  #plot(sequence, dataset)
-  
-  reg = lm(dataset~x)
-  if(reg$coefficients["x"] > 0 ){
-    result <- "Increase"
-  }else if(reg$coefficients["x"] < 0){
-    result <- "Decrease"
+	# Dataset is vector, pokonamah ka gigir
+  dataset <- dataset[start:length(dataset)]
+  if(length(unique(dataset)) == 1){
+  	result <- "Stable"
   }else{
-    result <- "Stable"
-  }
+	  x = c(1:length(dataset))  
+	  plot(x, dataset)
+	  # lines(sequence, dataset)
+
+	  reg = lm(dataset~x)
+	  if(reg$coefficients["x"] > 0 ){
+	    result <- "Increase"
+	  }else if(reg$coefficients["x"] < 0){
+	    result <- "Decrease"
+	  }else{
+	    result <- "Stable"
+	  }
   
-  # abline(reg,col="red")
+	  # print(reg)
+	  # abline(reg,col="red")
+  }
   
   return(result)
 }
