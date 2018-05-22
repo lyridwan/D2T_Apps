@@ -1,0 +1,15 @@
+Desc,SecMin,SecMax,Same
+this minute,-1,60,1
+this hour,60,3600,1
+today,3600,86400,1
+this week,86400,216000,1
+this month,216000,5184000,1
+this year,5184000,36288000,1
+unknown range date on data,36288000,99999999999,1
+last minute from minutely data,-1,60,0
+last hour from hourly data,60,3600,0
+last day from daily data,3600,86400,0
+last week from weekly data,86400,216000,0
+last month from monthly data,216000,5184000,0
+last year from yearly data,5184000,36288000,0
+unknown range date on data,36288000,99999999999,0

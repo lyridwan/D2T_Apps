@@ -299,7 +299,7 @@ Data Interpret Function"
 
 
 MembershipClassifier <- function(value, corpus){
-  sapply(value, function(v) corpus[v >= corpus["Lower"] & v < corpus["Upper"],"Category"])
+   return (sapply(value, function(v) corpus[v >= corpus["Lower"] & v < corpus["Upper"],"Category"]))
 }
 
 #TO BE UPDATED!!!!
@@ -369,8 +369,11 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume){
     }
   }else{
     corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
-    maxRange <- as.double(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
-    minRange <- as.double(statisticalResume[statisticalResume$ColName == type,"MinValue"])
+    maxRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
+    minRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MinValue"])
+
+    maxRange <- as.double(maxRange)
+    minRange <- as.double(minRange)
 
     if(minRange == maxRange){
       result <- "Constant"
@@ -513,7 +516,7 @@ ReadIntro <- function(source="Data", type="General"){
     corpus <- as.matrix(read.table(file=paste0("Corpus/",type,"Intro.csv"), header=FALSE, sep=';'))
     # print(corpus)
     n <- length(corpus)
-    random_value <- as.integer(runif(1,1,n))
+    random_value <- as.integer(runif(1,1,n+0.5))
 
     result <- corpus[random_value]
     return (result)
@@ -525,7 +528,7 @@ ReadIntro <- function(source="Data", type="General"){
 
 ReadResumeIntro <- function(dataset, ColName, source="dataset"){
   
-  corpus <- as.matrix(read.table(file=paste0("Corpus/",type,"Intro.csv"), header=FALSE, sep=';'))
+  corpus <- as.matrix(read.table(file=paste0("Corpus/","ResumeIntro.csv"), header=FALSE, sep=';'))
 
   
    
@@ -554,7 +557,7 @@ ReadResumeIntro <- function(dataset, ColName, source="dataset"){
   param <- ""
   i <- 2
   for (i in i:length(ColName)-1) {
-    if(i == 1){
+    if(i == 2){
       param <- paste0(param,ColName[i])
     }
     else{
@@ -568,6 +571,34 @@ ReadResumeIntro <- function(dataset, ColName, source="dataset"){
   return (result)
 }
 
+ChangeTimeDesc <- function(source, dataset){
+  n <- nrow(dataset)
+  timeFirst <- as.character(dataset[n-1,'DateTime'])
+  timeLast <- as.character(dataset[n,'DateTime'])
+
+  timeFirst <- strptime(timeFirst, "%Y/%m/%d %H:%M:%OS")
+  timeLast <- strptime(timeLast, "%Y/%m/%d %H:%M:%OS")
+
+  now <- as.character(Sys.time())
+  now <- strptime(now, "%Y-%m-%d")
+  dayData <- as.character(dataset[length(dataset),'DateTime'])
+  dayData <- strptime(dayData, "%Y/%m/%d")
+  same <- 0
+  if(now == dayData){
+    same <- 1
+  }else{
+    same <- 0
+  }
+
+  difTime <- as.numeric(timeLast-timeFirst,units="secs")
+
+
+  corpus <- read.table(file=paste0("Corpus/TimeDesc.csv"), sep=",", header=TRUE)
+  timeDesc <- as.character(corpus[corpus$SecMin < difTime & corpus$SecMax >= difTime & corpus$Same == same,"Desc"])
+
+  result <- gsub("@TimeDesc", timeDesc, source)
+  return (result)
+}
 
 ResumeTrend <- function(){
 
@@ -579,11 +610,20 @@ ResumeEvent <- function(){
 
 }
 
-CurrentIntro <- function(){
+CurrentDesc <- function(interpreterLast){
+  result <- ''
+  i <- 1
+  for (i in i:length(interpreterLast)) {
+    if(i == 1 || i == length(interpreterLast)){  
+      result <- paste0(result, colnames(interpreterLast[i])," is ",interpreterLast[1,i])
+    }else if(i == length(interpreterLast)-1){
+      result <- paste0(result,", ", colnames(interpreterLast[i])," is ",interpreterLast[1,i]," and ")
+    }else{
+      result <- paste0(result,", ", colnames(interpreterLast[i])," is ",interpreterLast[1,i])
+    }
+  }
 
-}
-CurrentDesc <- function(){
-
+  return(result)
 }
 CurrentAglast <- function(){
 
