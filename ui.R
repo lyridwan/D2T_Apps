@@ -4,7 +4,7 @@ library(shiny)
 shinyUI(
 fluidPage( 
 
-  source("D2T_machine.R",local=TRUE),
+  source("D2T_Main.R",local=TRUE),
   tags$head(
     tags$meta(charset="utf-8"),
     tags$meta('http-equiv'="X-UA-Compatible", content="IE=edge"),

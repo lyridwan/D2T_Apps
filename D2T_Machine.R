@@ -642,8 +642,8 @@ PredictConc <- function(){
 
 }
 
-TrendAnalysis <- function(dataset){
-  sequence = c(1:length(dataset))  
+TrendAnalysis <- function(start,dataset){
+  sequence = c(start:length(dataset))  
   plot(sequence, dataset)
   reg = lm(dataset~sequence)
   abline(reg,col="red")
