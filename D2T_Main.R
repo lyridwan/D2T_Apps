@@ -1,3 +1,4 @@
+# setwd("~/GitHub/D2T_Apps")
 
 # INITIALIZING
 source("D2T_Machine.R", local = TRUE)
@@ -5,6 +6,7 @@ source("D2T_Machine.R", local = TRUE)
 
 # READ DATA
 dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
+datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
 
 #  
@@ -69,12 +71,24 @@ predictIntro <- ReadIntro(type="Predict")
 predictContent <- "Content content content."
 predictConc <- "Conclussion from predict result."
 
-resumeResult <- paste(resumeIntro, resumeTrend, resumeEvent)
 
+i <- 1
+vectorTrendAnalysisResult <- c()
+for(i in i:length(datasetWithoutDate)){
+  vectorColumn <- datasetWithoutDate[[i]]
+  vectorTrendAnalysisResult[i] <- TrendAnalysis(1, vectorColumn)
+}
+
+#merging DF with trend column
+statisticalResume$Trend <- vectorTrendAnalysisResult
+
+resumeResult <- paste(resumeIntro, resumeTrend, resumeEvent)
 # currentResult <- paste(currentIntro, currentDesc, currentAglast, currentAgresume)
 currentResult <- paste(currentIntro, currentDesc)
 
 predictResult <- paste(predictIntro, predictContent, predictConc)
+
+source("D2T_Machine.R", local = TRUE)
 
 resumeResult
 currentResult
