@@ -63,7 +63,7 @@ resumeEvent <- paste(eventIntro,"6 value from Xth to Yth")
 
 currentIntro <- ChangeTimeDesc(ReadIntro(type="Current"),dataset["DateTime"])
 currentDesc <- CurrentDesc(interpreterLast)
-currentAglast <- "higher than ......n-1 data."
+currentAglast <- TrendAnalysis(length(dataset)-5, dataset)
 currentAgresume <- "and now is the higest from overall."
 
 predictIntro <- ReadIntro(type="Predict")
