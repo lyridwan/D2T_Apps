@@ -3,31 +3,31 @@
 # setwd("~/GitHub/D2T_Apps")
 #----------------------- Packages Requirement -----------------------#
 #1. Shiny R
-# install.packages(shiny) #-- server & GUI
+# install.packages("shiny") #-- server & GUI
 library(shiny)
 
 #2. Smooth 
-# install.packages(smooth) -> #predicting  with ex.smoothing
+# install.packages("smooth") -> #predicting  with ex.smoothing
 library(smooth)
 
 #3. Gradient Descent Packages 
-# install.packages(gradDescent)
+# install.packages("gradDescent")
 library(gradDescent)
 
 #4. Time-Series data object
-# install.packages(xts)
+# install.packages("xts")
 library(xts)
 
 #4. Time-Series data object
-#install.packages(sets)
+#install.packages("sets")
 library(sets)
 
 #5. plotrix
-#install.packages(plotrix)
+#install.packages("plotrix")
 library(plotrix)
 
 #5. ade4
-#install.packages(ade4)
+#install.packages("ade4")
 # library(ade4)
 
 #-----------------------------------------------------------------#
