@@ -5,6 +5,7 @@ shinyUI(
 fluidPage( 
 
   source("D2T_Main.R",local=TRUE),
+  # source("D2T_Machine.R",local=TRUE),
   tags$head(
     tags$meta(charset="utf-8"),
     tags$meta('http-equiv'="X-UA-Compatible", content="IE=edge"),
@@ -57,9 +58,6 @@ fluidPage(
                               tags$a(href="#dataClimates","Weather Data")
                           ),
                       tags$li(class="page-scroll",
-                              tags$a(href="#dataAQ","AirQuality Data")
-                          ),
-                      tags$li(class="page-scroll",
                               tags$a(href="#sitemap","About")
                           )
                       )
@@ -75,239 +73,7 @@ fluidPage(
         tags$br(),
         tags$br(),
         tags$hr(),
-          tags$div(class="container",id="maincontent",tabindex="-1",
-            tags$div(class="row",
-                  tags$div(class="col-lg-12",
-                   tags$div(class="col-lg-2",
-                    tags$div(class="containerimg",'data-toggle'="modal",'data-target'="#myModal",
-                      tags$img(src="assets/light-rain.png", width="100%"),
-                      tags$a(href="#",tags$div(class="overlay",tags$div(class="textimg","Show Data")))
-                      ),
-                    tags$p(align="center", print(InterpretationResult_rainfall),tags$br(),
-                    rainfall<-format(round(y[1,"Rainfall"],2),nsmall=2),HTML("mm"),tags$sup("2")
-                    ),
-                    #print(rainfall),
-                      tags$div(class="containerimg", 'data-toggle'="modal",'data-target'="#modalTemperature",
-
-                      tags$img(src="assets/warm.png", width="100%"),
-                      
-                       tags$a(href="#",tags$div(class="overlay",tags$div(class="textimg","Show Data")))
-                      ),
-                      tags$p(align="center", print(InterpretationResult_temperature),tags$br(),
-                      temperature<-format(round(y[1,"Average.Temperature"],2),nsmall=2),tags$sup("o"),HTML("C")
-                      )
-                    ),
-                    
-                   tags$div(class="col-lg-2",
-                    tags$div(class="containerimg", 'data-toggle'="modal",'data-target'="#modalAQ",
-                      tags$img(src="assets/good.png", width="100%"),
-                      tags$a(href="#",tags$div(class="overlay",tags$div(class="textimg","Show Data")))
-                      ),
-                        tags$p(align="center", print(InterpretationResult_airQuality),tags$br(),
-                        HTML("CO :"),AQ<-format(round(AQPredictionResult[1,"CO"],2),nsmall=2),HTML("ppm")
-                        ),
-                    tags$div(class="containerimg", 'data-toggle'="modal",'data-target'="#modalWind",
-                      tags$img(src="assets/breeze.png", width="100%"),
-                       tags$a(href="#",tags$div(class="overlay",tags$div(class="textimg","Show Data")))
-                      ),
-                        tags$p(align="center", print(InterpretationResult_windSpeed),tags$br(),
-                        HTML(""),AQ<-format(round(y[1,"Wind.Speed"],2),nsmall=2),HTML("km/h")
-                        )
-                    ),
-                   tags$div(class="col-lg-8",
-                      tags$h2("Weather Prediction News"),
-                      tags$p(align="justify",HTML('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'),
-                             Prediction_Result
-                          ),
-                      tags$hr(class="style13"),
-                      tags$p(align="justify",HTML('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'),
-                            
-                             MonthlyMsg
-                          )
-                    )
-                  )
-              ),
-
-            tags$section(id="dataClimates",
-              tags$div(class="topup",
-                tags$hr(),
-                tags$p(align="center", tags$h3("Weather Datasets")),
-                tags$div(class="row",
-                  tags$div(class="col-lg-12",
-                    dataTableOutput('dataClimates')
-                  )
-                )
-              )
-            ),
-
-            tags$section(id="dataAQ",
-              tags$div(class="topup",
-                tags$hr(),
-                tags$p(align="center", tags$h3("AirQuality Datasets")),
-                tags$div(class="row",
-                  tags$div(class="col-lg-12",
-                    dataTableOutput('dataAQ')
-                  )
-                )
-              )
-            ),
-
-
-   
-
-            #<!-- Modal -->
-              tags$div(id="myModal",class="modal fade",role="dialog",
-                tags$div(class="modal-dialog",
-
-                  # <!-- Modal content-->
-                  tags$div(class="modal-content",
-                    tags$div(class="modal-header",
-                      tags$button(type="button", class="close", 'data-dismiss'="modal","Data"),
-                      tags$h4(class="modal-title")
-                    ),
-                    tags$div(class="modal-body",
-                      plotOutput("plotRainfall", click = "plot_click"),
-                      verbatimTextOutput("info"),
-                      tags$table(class="table table-hover",
-                        tags$tr(
-                          tags$td(
-                          tags$p("Average in a month")),
-                          tags$td(LMmean_result["Rainfall"], "mm2")
-                        ),
-                        tags$tr(
-                          tags$td(
-                          tags$p("Todays Value")),
-                          tags$td(TodaysWeather$Rainfall, "mm2")
-                        ),
-                        tags$tr(
-                          tags$td(
-                          tags$p("Tomorrow Prediction")),
-                          tags$td(y[1,"Rainfall"], "mm2")
-                        ),
-                         tags$tr(
-                          tags$td(
-                          tags$p("description")),
-                          tags$td(InterpretationResult_rainfall)
-                        )
-
-                      )
-                    ),
-                    tags$div(class="modal-footer",
-                      tags$button(type="button", class="btn btn-default", 'data-dismiss'="modal","Close")
-                    )
-                   
-                  )
-                 )
-                ),
-              tags$div(id="modalTemperature", class="modal fade",role="dialog",
-                tags$div(class="modal-dialog",
-                  tags$div(class="modal-content",
-                    tags$div(class="modal-header",
-                      tags$button(type="button", class="close", 'data-dismiss'="modal","Ranfall Data"),
-                      tags$h4(class="modal-title")
-                    ),
-                    tags$div(class="modal-body",
-                      plotOutput("plotTemperature", click = "plot_click"),
-                      # verbatimTextOutput("info"),
-                      tags$table(class="table table-hover",
-                        tags$tr(
-                          tags$td(
-                          tags$p("Average in a month")),
-                          tags$td(LMmean_result["Average.Temperature"], "degree of Celcius")
-                        ),
-                        tags$tr(
-                          tags$td(
-                          tags$p("Todays Value")),
-                          tags$td(TodaysWeather$Temperature, "degree of Celcius")
-                        ),
-                        tags$tr(
-                          tags$td(
-                          tags$p("Tomorrow Prediction")),
-                          tags$td(y[1,"Average.Temperature"], "degree of Celcius")
-                        ),
-                         tags$tr(
-                          tags$td(
-                          tags$p("description")),
-                          tags$td(InterpretationResult_temperature)
-                        )
-                      )
-
-                    )
-
-                  )
-                )
-              ),
-          tags$div(id="modalWind", class="modal fade",role="dialog",
-                tags$div(class="modal-dialog",
-                  tags$div(class="modal-content",
-                    tags$div(class="modal-header",
-                      tags$button(type="button", class="close", 'data-dismiss'="modal","Ranfall Data"),
-                      tags$h4(class="modal-title")
-                    ),
-                    tags$div(class="modal-body",
-                      plotOutput("plotWindSpeed", click = "plot_click"),
-                      # verbatimTextOutput("info"),
-                      tags$table(class="table table-hover",
-                        tags$tr(
-                          tags$td(
-                          tags$p("Average in a month")),
-                          tags$td(LMmean_result["Wind.Speed"], "km/h")
-                        ),
-                        tags$tr(
-                          tags$td(
-                          tags$p("Todays Value")),
-                          tags$td(TodaysWeather$WindSpeed, "km/h")
-                        ),
-                        tags$tr(
-                          tags$td(
-                          tags$p("Tomorrow Prediction")),
-                          tags$td(y[1,"Wind.Speed"], "km/h")
-                        ),
-                         tags$tr(
-                          tags$td(
-                          tags$p("description")),
-                          tags$td(InterpretationResult_windSpeed)
-                        )
-                      )
-
-                    )
-
-                  )
-                )
-              ),
-          tags$div(id="modalAQ", class="modal fade",role="dialog",
-                tags$div(class="modal-dialog",
-                  tags$div(class="modal-content",
-                    tags$div(class="modal-header",
-                      tags$button(type="button", class="close", 'data-dismiss'="modal","Ranfall Data"),
-                      tags$h4(class="modal-title")
-                    ),
-                    tags$div(class="modal-body",
-                      plotOutput("plotAQ", click = "plot_click"),
-                      # verbatimTextOutput("info"),
-                      tags$table(class="table table-hover",
-                         tags$tr(
-                          tags$td(
-                          tags$p("description")),
-                          tags$td(InterpretationResult_airQuality
-                            )
-                          ),
-                         tags$tr(
-                          tags$td(
-                          dataTableOutput('AQPredictionResult_data')
-                            )
-                          )
-                      )
-
-                    )
-
-                  )
-                )
-              )
-
-
-
-          )
+          
     ),
     tags$script(src="bootstrap/vendor/jquery/jquery.min.js"),
 
@@ -336,7 +102,7 @@ fluidPage(
                     ),
                     tags$div(class="footer-col col-md-4",
                         tags$h3("Researcher"),
-                        tags$p(HTML("Brahma Putra"),tags$a(href="www.google.com","brahma.putra96@student.upi.edu")
+                        tags$p(HTML("XY"),tags$a(href="www.google.com","~~@student.upi.edu")
                           ),
                         tags$ul(class="list-inline",
                             tags$li(

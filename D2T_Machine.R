@@ -375,12 +375,10 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume){
     maxRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
     minRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MinValue"])
 
-    corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
-    maxRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MaxValue"])
-    minRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MinValue"])
+    # corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
+    # maxRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MaxValue"])
+    # minRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MinValue"])
 
-    maxRange <- as.double(maxRange)
-    minRange <- as.double(minRange)
 
     if(minRange == maxRange){
       result <- "Constant"
@@ -388,6 +386,8 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume){
       n = nrow(corpus)
       node = (2*n)+n-1
 
+      maxRange <- as.double(maxRange)
+      minRange <- as.double(minRange)
       rangenode = (maxRange-minRange)/node
 
       value <- 7
@@ -592,6 +592,8 @@ ChangeTimeDesc <- function(source, dataset, type = "0"){
   dayData <- as.character(dataset[nrow(dataset),'DateTime'])
   dayData <- strptime(dayData, "%Y/%m/%d")
   same <- 0
+
+  print(timeFirst)
   
   if(type == "0"){
 	  if(now == dayData){
@@ -602,9 +604,9 @@ ChangeTimeDesc <- function(source, dataset, type = "0"){
   }else{
   	if(now == dayData){
 	    same <- 1
- 	}else{
-		same <- 2
-	}
+   	}else{
+  		same <- 2
+  	}
   }
 
   difTime <- as.numeric(timeLast-timeFirst,units="secs")
@@ -613,7 +615,23 @@ ChangeTimeDesc <- function(source, dataset, type = "0"){
   corpus <- read.table(file=paste0("Corpus/TimeDesc.csv"), sep=",", header=TRUE)
   timeDesc <- as.character(corpus[corpus$SecMin < difTime & corpus$SecMax >= difTime & corpus$Same == same,"Desc"])
 
-  result <- gsub("@TimeDesc", timeDesc, source)
+  result <- source
+  # print(source)
+  # print("~~~")
+  print(length(source))
+  print(timeFirst)
+  print(timeLast)
+  print(same)
+  print(timeDesc)
+  print(corpus)
+  if(grepl("@TimeDesc", source)){
+    # result <- str_replace(source, "@TimeDesc", timeDesc)
+    result <- gsub("@TimeDesc",timeDesc,source)
+    # result <- sapply(1:nrow(source), function(x) gsub("@TimeDesc",timeDesc,source[x]))
+  }
+  # print(result)
+  # print("11111")
+  
   return (result)
 }
 
@@ -629,11 +647,12 @@ ResumeTrend <- function(statisticalResume){
       i<-1
       n <- nrow(listTrend)
       for(i in i:n){
+
         if(i==1){
           result <- paste0(result,listTrend[i,"ColName"])
           
         }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          result <- paste0(result,",",listTrend[i,"ColName"])
         }
       }
       
@@ -643,11 +662,12 @@ ResumeTrend <- function(statisticalResume){
       listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
       i<-1
       for(i in i:n){
+        
         if(i==1){
           result <- paste0(result,listTrend[i,"ColName"])
           
         }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          result <- paste0(result,",",listTrend[i,"ColName"])
         }
       }
       
@@ -662,7 +682,7 @@ ResumeTrend <- function(statisticalResume){
           result <- paste0(result,listTrend[i,"ColName"])
           
         }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          result <- paste0(result,",",listTrend[i,"ColName"])
         }
       }
       
@@ -676,7 +696,7 @@ ResumeTrend <- function(statisticalResume){
           result <- paste0(result,listTrend[i,"ColName"])
           
         }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          result <- paste0(result,",",listTrend[i,"ColName"])
         }
       }
       
@@ -693,7 +713,7 @@ ResumeTrend <- function(statisticalResume){
           result <- paste0(result,listTrend[i,"ColName"])
           
         }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          result <- paste0(result,",",listTrend[i,"ColName"])
         }
       }
       
@@ -720,7 +740,7 @@ ResumeTrend <- function(statisticalResume){
           result <- paste0(result,listTrend[i,"ColName"])
           
         }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          result <- paste0(result,",",listTrend[i,"ColName"])
         }
       }
       
@@ -733,7 +753,7 @@ ResumeTrend <- function(statisticalResume){
           result <- paste0(result,listTrend[i,"ColName"])
           
         }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          result <- paste0(result,",",listTrend[i,"ColName"])
         }
       }
       
@@ -824,10 +844,17 @@ CurrentDesc <- function(interpreterNow,statisticalResume, dataset){
 	}
 
 	trendLastFive <- TrendAnalysis(nrow(dataset)-3, dataset[[colnames(interpreterNow[i])]])
-	
-  	result <- paste0(result," trend in last 3 data is ",trendLastFive)
+  if(trendLastFive == "-"){
+    trendLastFive <- "decreased"
+  }else if(trendLastFive == "+"){
+    trendLastFive <- "increased"
+  }else{
+    trendLastFive <- "constant"
+  }
+  
+    result <- paste0(result," trend in last 3 data is ",trendLastFive)
 
-	if(i == length(interpreterNow)-1){
+  if(i == length(interpreterNow)-1){
       result <- paste0(result," and ")
     }
   }
@@ -878,4 +905,6 @@ TrendAnalysis <- function(start,dataset){
   
   return(result)
 }
+
+
 

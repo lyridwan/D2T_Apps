@@ -5,7 +5,7 @@ source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
-dataset <- read.table(file="Datasets/dummy.csv", sep=",", header=TRUE)
+dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
 
