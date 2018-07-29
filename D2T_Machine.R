@@ -1,6 +1,6 @@
 
 #Data-to-text System - Ahmad - Ridwan
-# setwd("~/GitHub/D2T_Apps")
+setwd("~/Programming/GitHub/D2T_Apps")
 #----------------------- Packages Requirement -----------------------#
 #1. Shiny R
 # install.packages("shiny") #-- server & GUI
@@ -8,7 +8,7 @@ library(shiny)
 
 #2. Smooth 
 # install.packages("smooth") -> #predicting  with ex.smoothing
-library(smooth)
+#library(smooth)
 
 #3. Gradient Descent Packages 
 # install.packages("gradDescent")
@@ -302,11 +302,17 @@ Data Interpret Function"
 
 
 MembershipClassifier <- function(value, corpus){
-   return (sapply(value, function(v) corpus[v >= corpus["Lower"] & v < corpus["Upper"],"Category"]))
+  
+  interpreterResult <- sapply(value, function(v) corpus[v >= corpus["Lower"] & v < corpus["Upper"],"Category"])
+  interpreterIndex <- which(interpreterResult == corpus$Category)
+  return (list(InterpreterResult = as.character(interpreterResult), InterpreterIndex = interpreterIndex))
 }
 
 #TO BE UPDATED!!!!
 MembershipFuzzy <- function(value, corpus){
+  if(is.null(corpus)){
+    return (list(InterpreterResult = as.character("Constant"), InterpreterIndex = NA))
+  }
   i <- 1;
   n <- nrow(corpus);
   m <- length(corpus);
@@ -335,8 +341,9 @@ MembershipFuzzy <- function(value, corpus){
   }
   
   #check highest membership result
-  membershipResult <- corpus[which.max(membershipValue), "Category"]
-  return (membershipResult)
+  interpreterResult <- corpus[which.max(membershipValue), "Category"]
+  interpreterIndex <- which(interpreterResult == corpus$Category)
+  return (list(InterpreterResult = as.character(interpreterResult), InterpreterIndex = interpreterIndex))
   # interval <- vector("list", n);
   # for (i in i:n) {
   #   interval[[i]] <- strsplit(as.character(corpus[i,"Interval"]), " ")[[1]];
@@ -346,6 +353,241 @@ MembershipFuzzy <- function(value, corpus){
   # return(interval)
 }
 
+TrendFuzzyGenerator <-function(type, statisticalResume){
+  corpus <- read.table(file=paste0("Corpus/TrendFuzzyAdjective.csv"), sep=",", header=TRUE)
+  maxRange <- as.character(statisticalResume[statisticalResume$ColName == type, "MaxValue"])
+  minRange <- as.character(statisticalResume[statisticalResume$ColName == type, "MinValue"])
+  
+  # corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
+  # maxRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu", "MaxValue"])
+  # minRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu", "MinValue"])
+  
+  listGeneralPartition <- list()
+  if(minRange == maxRange){
+    result <- NULL
+    return(result)
+  }else{
+    n = nrow(corpus)
+    node = (2*n)+n-1
+    
+    minRange <- as.double(maxRange)/2*-1
+    maxRange <- as.double(maxRange)/2
+    
+    cat(">>>> max min", maxRange, minRange)
+    rangenode = (maxRange-minRange)/node
+    
+    i=1
+    j=0
+    membershipValue <- c()
+    for (i in i:n) {
+      if(i == 1){
+        v1<-minRange;
+        v2<-minRange;
+        v3<-minRange+(2*rangenode);
+        v4<-minRange+(3*rangenode);
+        
+        # print("````````````````````````````")
+        # print(j)
+        j <- i+1
+        # print(j)
+        # print(value)
+        # print(membershipValue[i])
+        # print(v1)
+        # print(v2)
+        # print(v3)
+        # print(v4)
+        
+        cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
+        listGeneralPartition[[i]] <- c(v1,v2,v3,v4)
+        #listGeneralPartition[[corpus$Category[i]]] <- c(v1,v2,v3,v4)
+      }else{
+        
+        v1<-minRange+(j)*rangenode;
+        v2<-minRange+(j+1)*rangenode;
+        v3<-minRange+(j+3)*rangenode;
+        v4<-minRange+(j+4)*rangenode;
+        cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
+        
+        listGeneralPartition[[i]] <- c(v1,v2,v3,v4)
+        
+        #lines(c(v1,v2,v3,v4),as.matrix(c(1,6,6,1)),lwd=1,col="red")
+        # print("````````````````````````````")
+        # print(j)
+        j <- j+3
+        # print(j)
+        # print(value)
+        # print(membershipValue[i])
+        # print(v1)
+        # print(v2)
+        # print(v3)
+        # print(v4)
+      }
+    }
+    
+    # result <- corpus[2, "Category"]
+    # result<- paste("Not available for general -aa",which.max(membershipValue))
+    ##corpus <- read.table(file="Corpus/GeneralAdjective.csv", sep=",", header=TRUE)
+    ##result <- MembershipFuzzy(value, corpus);
+  }
+  
+  #exception for first and last point
+  listGeneralPartition[[1]][1] <- as.double(as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"]))*-1
+  listGeneralPartition[[length(listGeneralPartition)]][length(listGeneralPartition[[1]])] <- as.double(as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"]))
+  
+  
+  v1 <-unlist(lapply(listGeneralPartition, `[[`, 1))
+  v2 <-unlist(lapply(listGeneralPartition, `[[`, 2))
+  v3 <-unlist(lapply(listGeneralPartition, `[[`, 3))
+  v4 <-unlist(lapply(listGeneralPartition, `[[`, 4))
+  
+  #PLOTTING AREA
+  i<-1
+  plotting <- list()
+  for(i in i:length(listGeneralPartition)){
+    plotting[[i]] <- listGeneralPartition[[i]]
+  }
+  PlottingTrendFuzzy(plotting, type)
+  
+  result <- data.frame(Category=corpus$Category, v1, v2, v3, v4)
+
+ return(result)
+}
+
+GeneralFuzzyGenerator <-function(type, statisticalResume){
+  corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
+  maxRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
+  minRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MinValue"])
+  
+  # corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
+  # maxRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu", "MaxValue"])
+  # minRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu", "MinValue"])
+  
+  listGeneralPartition <- list()
+  if(minRange == maxRange){
+    result <- "Constant"
+  }else{
+    n = nrow(corpus)
+    node = (2*n)+n-1
+    
+    maxRange <- as.double(maxRange)
+    minRange <- as.double(minRange)
+    rangenode = (maxRange-minRange)/node
+    
+    i=1
+    j=0
+    membershipValue <- c()
+    for (i in i:n) {
+      if(i == 1){
+        v1<-minRange;
+        v2<-minRange;
+        v3<-minRange+(2*rangenode);
+        v4<-minRange+(3*rangenode);
+        
+        # print("````````````````````````````")
+        # print(j)
+        j <- i+1
+        # print(j)
+        # print(value)
+        # print(membershipValue[i])
+        # print(v1)
+        # print(v2)
+        # print(v3)
+        # print(v4)
+        
+        # cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
+        listGeneralPartition[[i]] <- c(v1,v2,v3,v4)
+        #listGeneralPartition[[corpus$Category[i]]] <- c(v1,v2,v3,v4)
+      }else{
+        # cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
+        v1<-minRange+(j)*rangenode;
+        v2<-minRange+(j+1)*rangenode;
+        v3<-minRange+(j+3)*rangenode;
+        v4<-minRange+(j+4)*rangenode;
+        
+        
+        listGeneralPartition[[i]] <- c(v1,v2,v3,v4)
+        
+        #lines(c(v1,v2,v3,v4),as.matrix(c(1,6,6,1)),lwd=1,col="red")
+        # print("````````````````````````````")
+        # print(j)
+        j <- j+3
+        # print(j)
+        # print(value)
+        # print(membershipValue[i])
+        # print(v1)
+        # print(v2)
+        # print(v3)
+        # print(v4)
+      }
+    }
+    
+    # result <- corpus[2, "Category"]
+    # result<- paste("Not available for general -aa",which.max(membershipValue))
+    ##corpus <- read.table(file="Corpus/GeneralAdjective.csv", sep=",", header=TRUE)
+    ##result <- MembershipFuzzy(value, corpus);
+  }
+  
+  v1 <-unlist(lapply(listGeneralPartition, `[[`, 1))
+  v2 <-unlist(lapply(listGeneralPartition, `[[`, 2))
+  v3 <-unlist(lapply(listGeneralPartition, `[[`, 3))
+  v4 <-unlist(lapply(listGeneralPartition, `[[`, 4))
+  
+  #PLOTTING AREA
+  i<-1
+  plotting <- list()
+  for(i in i:length(listGeneralPartition)){
+    plotting[[i]] <- listGeneralPartition[[i]]
+  }
+  PlottingFuzzy(plotting, type)
+  
+  result <- data.frame(Category=corpus$Category, v1, v2, v3, v4)
+  
+  return(result)
+}
+
+#Plotting Fuzzy
+#variables: list of 4 element of vector. Example: list(c(1,2,3,4))
+PlottingFuzzy <- function(variables, name="Undefined"){
+  matrix_graph <- list()
+  y=as.matrix(c(1,6,6,1))
+  n=length(variables)
+  # print(n)
+  maxX<-variables[[n]][4]
+  minX<-variables[[1]][1]
+  i=1;
+  for(i in i:n){
+    title <- paste(name," Membership Function")
+    if(i==1){
+      plot(variables[[i]],y,type="l",lwd=1,main=title,xlim=c(minX,maxX),yaxt="n",col="red")
+    }else{
+      lines(variables[[i]],y,lwd=1,col="red")
+    }
+  }
+}
+
+#Plotting Fuzzy
+#variables: list of 4 element of vector. Example: list(c(1,2,3,4))
+PlottingTrendFuzzy <- function(variables, name="Undefined"){
+  matrix_graph <- list()
+  
+  n=length(variables)
+  # print(n)
+  maxX<-variables[[n]][4]
+  i=1;
+  for(i in i:n){
+    y=as.matrix(c(1,6,6,1))
+    title <- paste(name," Membership Function")
+    if(i==1){
+      y[1,1] <-6
+      plot(variables[[i]],y,type="l",lwd=1,main=title,xlim=c(maxX*-1,maxX),yaxt="n",col="red")
+    }else if(i==n){
+      y[4,1] <-6
+      lines(variables[[i]],y,lwd=1,col="red")
+    }else{
+      lines(variables[[i]],y,lwd=1,col="red")
+    }
+  }
+}
 
 "
 @Desc
@@ -357,7 +599,7 @@ MembershipFuzzy <- function(value, corpus){
 --Input: value=25, type='AirQuality'
 --Output: Good
 "
-DataInterpreterAdjective <- function(value, type="General",statisticalResume){
+DataInterpreterAdjective <- function(value, type="General",statisticalResume=NULL){
   if(type == "AirQuality" || 
      type == "WindSpeed" || 
      type == "WindDirection" || 
@@ -371,83 +613,8 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume){
       result <- MembershipClassifier(value, corpus);
     }
   }else{
-    corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
-    maxRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
-    minRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MinValue"])
-
-    # corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
-    # maxRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MaxValue"])
-    # minRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu","MinValue"])
-
-
-    if(minRange == maxRange){
-      result <- "Constant"
-    }else{
-      n = nrow(corpus)
-      node = (2*n)+n-1
-
-      maxRange <- as.double(maxRange)
-      minRange <- as.double(minRange)
-      rangenode = (maxRange-minRange)/node
-
-      value <- 7
-      i=1
-      j=0
-      membershipValue <- c()
-      for (i in i:n) {
-        if(i == 1){
-          v1<-minRange;
-          v2<-minRange;
-          v3<-minRange+(2*rangenode);
-          v4<-minRange+(3*rangenode);
-          
-          ##/ ¯ \ <- 1st area, 2nd area, 3rd area
-          #first area
-          if((value>=v1)&&(value<=v2)){
-            membershipValue[i] <- (  (value-v1) / (v2-v1)  );
-          #second area (optimum)
-          }else if((value>v2)&&(value<=v3)){
-            membershipValue[i] <- 1;
-          #third area
-          }else if((value>v3)&&(value<=v4)){
-            membershipValue[i] <- (  (v4-value) / (v4-v3)  );
-          #fourth, default condition (outside)
-          }else{
-            membershipValue[i] <- 0;
-          }
-          j <- i+1
-        }else{
-          v1<-minRange+(j)*rangenode;
-          v2<-minRange+(j+1)*rangenode;
-          v3<-minRange+(j+3)*rangenode;
-          v4<-minRange+(j+4)*rangenode;
-          
-          ##/ ¯ \ <- 1st area, 2nd area, 3rd area
-          #first area
-          if((value>=v1)&&(value<=v2)){
-            membershipValue[i] <- (  (value-v1) / (v2-v1)  );
-          #second area (optimum)
-          }else if((value>v2)&&(value<=v3)){
-            membershipValue[i] <- 1;
-          #third area
-          }else if((value>v3)&&(value<=v4)){
-            membershipValue[i] <- (  (v4-value) / (v4-v3)  );
-          #fourth, default condition (outside)
-          }else{
-            membershipValue[i] <- 0;
-          }
-          j <- j+3
-        }
-      }
-
-      # result <- corpus[2, "Category"]
-      result <- corpus[which.max(membershipValue), "Category"]
-      # result<- paste("Not available for general -aa",which.max(membershipValue))
-      ##corpus <- read.table(file="Corpus/GeneralAdjective.csv", sep=",", header=TRUE)
-      ##result <- MembershipFuzzy(value, corpus);
-    }
-
-    
+    corpus <- GeneralFuzzyGenerator(type, statisticalResume)
+    result <- MembershipFuzzy(value, corpus);
   }
   
   # print(result)
@@ -457,14 +624,28 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume){
 DataInterpreter <- function(dataset,statisticalResume){
   i <- 1;
   n <- length(dataset);
-  interpreterResult <- dataset;
+  
+  #listInterpreterResult, return interpreter with their index, example - Interpreter: hot, Index: 3
+  vectorColName <- c()
+  vectorIntResult <- c()
+  vectorIntIndex <- c()
   for(i in i:n){
-    interpreterResult[i] <- DataInterpreterAdjective(dataset[i], type = names(dataset[i]), statisticalResume)
+    vectorColName[[i]] <- names(dataset[i])
+    
+    result <- DataInterpreterAdjective(dataset[i], type = names(dataset[i]), statisticalResume)
+    #print(result)
+    
+    vectorIntResult[[i]] <- result$InterpreterResult
+    vectorIntIndex[[i]] <- result$InterpreterIndex
+    
     # print(DataInterpreterAdjective(dataset[i], type = names(dataset[i])))
   }
   
-  # print(interpreterResult)
-  return(interpreterResult)
+  #interpreterResult <- dataset;
+  listResult <- list(Colname = vectorColName, InterpreterResult = vectorIntResult, InterpreterIndex = vectorIntIndex)
+  #print(vectorIntResult)
+  print(listResult)
+  #return(listResult)
 }
 
 
@@ -493,7 +674,7 @@ SubstrRight <- function(x, n){
   substr(x, nchar(x)-n+1, nchar(x))
   }
 
-Ordinal_indicator <- function(num){
+OrdinalIndicator <- function(num){
   if(num==11){
     oi<-"th"
     return(oi)
@@ -513,8 +694,70 @@ Ordinal_indicator <- function(num){
   else{
     oi<-"th"
   }
-  return(oi)
+  return(paste0(num,oi))
 }
+
+
+ChangeTimeDesc <- function(source, dataset, type = "0"){
+  n <- nrow(dataset)
+  timeFirst <- as.character(dataset[n-1,'DateTime'])
+  timeLast <- as.character(dataset[n,'DateTime'])
+  
+  timeFirst <- strptime(timeFirst, "%Y/%m/%d %H:%M:%OS")
+  timeLast <- strptime(timeLast, "%Y/%m/%d %H:%M:%OS")
+  
+  now <- as.character(Sys.time())
+  now <- strptime(now, "%Y-%m-%d")
+  dayData <- as.character(dataset[nrow(dataset),'DateTime'])
+  dayData <- strptime(dayData, "%Y/%m/%d")
+  same <- 0
+  
+  print(timeFirst)
+  
+  if(type == "0"){
+    if(now == dayData){
+      same <- 1
+    }else{
+      same <- 0
+    }
+  }else{
+    if(now == dayData){
+      same <- 1
+    }else{
+      same <- 2
+    }
+  }
+  
+  difTime <- as.numeric(timeLast-timeFirst,units="secs")
+  
+  
+  corpus <- read.table(file=paste0("Corpus/TimeDesc.csv"), sep=",", header=TRUE)
+  timeDesc <- as.character(corpus[corpus$SecMin < difTime & corpus$SecMax >= difTime & corpus$Same == same,"Desc"])
+  
+  result <- source
+  # print(source)
+  # print("~~~")
+  print(length(source))
+  print(timeFirst)
+  print(timeLast)
+  print(same)
+  print(timeDesc)
+  print(corpus)
+  if(grepl("@TimeDesc", source)){
+    # result <- str_replace(source, "@TimeDesc", timeDesc)
+    result <- gsub("@TimeDesc",timeDesc,source)
+    # result <- sapply(1:nrow(source), function(x) gsub("@TimeDesc",timeDesc,source[x]))
+  }
+  # print(result)
+  # print("11111")
+  
+  return (result)
+}
+
+#------------------------------------------------------------------------------------------------------------------
+# INTRO
+#------------------------------------------------------------------------------------------------------------------
+
 
 ReadIntro <- function(source="Data", type="General"){
   type
@@ -563,77 +806,26 @@ ReadResumeIntro <- function(dataset, ColName, source="dataset"){
 
   #Replacing Parameter with array
   param <- ""
-  i <- 2
+  i <- 1
   for (i in i:length(ColName)-1) {
-    if(i == 2){
-      param <- paste0(param,ColName[i])
+    if(i == 1){
+      param <- paste0(ColName[i])
     }
     else{
-      param <- paste0(param,",",ColName[i])
+      param <- paste0(param,", ",ColName[i])
     }
   # print(param)
   }
-  param <- paste(param,"and",ColName[i+1])
+  param <- paste0(param,", and ",ColName[i+1])
   result <- gsub("@param", param, result)
-
-  return (result)
-}
-
-ChangeTimeDesc <- function(source, dataset, type = "0"){
-  n <- nrow(dataset)
-  timeFirst <- as.character(dataset[n-1,'DateTime'])
-  timeLast <- as.character(dataset[n,'DateTime'])
-
-  timeFirst <- strptime(timeFirst, "%Y/%m/%d %H:%M:%OS")
-  timeLast <- strptime(timeLast, "%Y/%m/%d %H:%M:%OS")
-
-  now <- as.character(Sys.time())
-  now <- strptime(now, "%Y-%m-%d")
-  dayData <- as.character(dataset[nrow(dataset),'DateTime'])
-  dayData <- strptime(dayData, "%Y/%m/%d")
-  same <- 0
-
-  print(timeFirst)
-  
-  if(type == "0"){
-	  if(now == dayData){
-	    same <- 1
-	  }else{
-	    same <- 0
-	  }
-  }else{
-  	if(now == dayData){
-	    same <- 1
-   	}else{
-  		same <- 2
-  	}
-  }
-
-  difTime <- as.numeric(timeLast-timeFirst,units="secs")
-
-
-  corpus <- read.table(file=paste0("Corpus/TimeDesc.csv"), sep=",", header=TRUE)
-  timeDesc <- as.character(corpus[corpus$SecMin < difTime & corpus$SecMax >= difTime & corpus$Same == same,"Desc"])
-
-  result <- source
-  # print(source)
-  # print("~~~")
-  print(length(source))
-  print(timeFirst)
-  print(timeLast)
-  print(same)
-  print(timeDesc)
-  print(corpus)
-  if(grepl("@TimeDesc", source)){
-    # result <- str_replace(source, "@TimeDesc", timeDesc)
-    result <- gsub("@TimeDesc",timeDesc,source)
-    # result <- sapply(1:nrow(source), function(x) gsub("@TimeDesc",timeDesc,source[x]))
-  }
-  # print(result)
-  # print("11111")
   
   return (result)
 }
+
+#------------------------------------------------------------------------------------------------------------------
+# RESUME ANALYSIS
+#------------------------------------------------------------------------------------------------------------------
+
 
 ResumeTrend <- function(statisticalResume){
   freq <- table(statisticalResume["Trend"])
@@ -823,11 +1015,307 @@ ResumeTrend <- function(statisticalResume){
 ResumeIntroSentence <- function(){
 
 }
+
 ResumeEvent <- function(){
 
 }
 
-CurrentDesc <- function(interpreterNow,statisticalResume, dataset){
+#Repeated Value analysis
+ResumeRepeatedAnalysis <- function(dataset){
+  
+  lengthEncoding <- rle(dataset)
+  #Example:
+  #Run Length Encoding
+  #lengths: int [1:26] 5 1 1 1 1 1 1 1 1 1 ...
+  #values : int [1:26] 10 15 13 14 12 13 14 10 12 14 ...
+  
+  repeatedSequence <- rep(lengthEncoding$lengths >= 3, times=lengthEncoding$lengths)
+  #Example repeatedSequence
+  #[1] FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
+  #[20]  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
+  
+  #print(repeatedSequence)
+  
+  RepValue <- as.numeric(table(repeatedSequence)["TRUE"])
+  if(!is.na(RepValue)){
+    # Get 
+    dt <- data.frame(number = rle(repeatedSequence)$values, lengths = rle(repeatedSequence)$lengths)
+    # Get the end
+    dt$end <- cumsum(dt$lengths)
+    # Get the start
+    dt$start <- dt$end - dt$lengths + 1
+    # Selecting column
+    dt <- dt[dt$number == TRUE, c("number", "start", "end")]
+    result <- list(RepValue = nrow(dt), Start = dt$start, End = dt$end)
+  }else{
+    result <- list(RepValue = 0, Start = 0, End = 0)
+  }
+  
+  return(result)
+}
+
+ResumeHighestGrowthAnalysis <- function(dataset, type=NULL){
+  #Count up all positive and negative value
+  #With their index
+  #EXAMPLE:
+  #dataset:  1  2 -2  1 -1  2  2
+  #result :  3 -2  1 -1  4
+  #Start  : 1 3 4 5 6
+  #End    : 2 3 4 5 7
+  i<-1
+  
+  vectorTotalGrowth <- c()
+  vectorStartIndex <- c()
+  vectorEndIndex <- c()
+  
+  #isNegative: Vector, true if negative, false if positive
+  isNegative <- dataset
+  isNegative[isNegative==0] <- NA
+  
+  isNegative <- isNegative<0
+  
+  print(isNegative)
+  status1 <- TRUE
+  status2 <- TRUE
+  tempGrowth <-0
+  
+  
+  vectorStartIndex[[1]] <- 1
+  counter <- 1
+  
+  #Main Calculation
+  for(i in i:length(dataset)){
+    if(!is.na(isNegative[i])){
+      #update param value while itterate
+      status1 <- status2
+      status2 <- isNegative[i]
+      
+      #if type is same, ex: positive-positive, negative-negative
+      if(status1 == status2){
+        #for last dataset
+        if(i==length(dataset)){
+          tempGrowth <- tempGrowth + dataset[i]
+          vectorTotalGrowth[[counter]] <- tempGrowth
+        }else{
+          tempGrowth <- tempGrowth + dataset[i]
+        }
+        vectorEndIndex[[counter]] <- i
+        
+        #if n != n-1, positive-negative
+      }else{
+        #storing variable, counter++
+        vectorTotalGrowth[[counter]] <- tempGrowth
+        
+        counter<- counter+1
+        
+        vectorStartIndex[[counter]] <- i
+        vectorEndIndex[[counter]] <- i
+        
+        #for last dataset
+        if(i==length(dataset)){
+          tempGrowth <- dataset[i]
+          vectorTotalGrowth[[counter]] <- tempGrowth
+        }
+        
+        #resetting parameter
+        tempGrowth <- 0
+        
+        tempGrowth <- dataset[i]
+        status2 <- isNegative[i]
+        
+      }
+    }else{
+      status1 <- "SKIP"
+      status2 <- "SKIP"
+      
+      vectorTotalGrowth[[counter]] <- tempGrowth
+      vectorEndIndex[[counter]] <- i
+    }
+  }
+  
+  #Return highest growth, with their start-end index
+  #Default, Returning all analysis result as big list  
+  if(is.null(type)){
+    return(list(TotalGrowth=vectorTotalGrowth, StartIndex=vectorStartIndex, EndIndex=vectorEndIndex))
+  }else if(type == "Growth"){
+    indexResult <- which.max(vectorTotalGrowth)
+    valueResult <- vectorTotalGrowth[indexResult]
+    
+    startIndexResult <- vectorStartIndex[indexResult]
+    endIndexResult <- vectorEndIndex[indexResult]
+    
+    return(list(valueResult=valueResult, startIndexResult=startIndexResult, endIndexResult=endIndexResult))
+    
+    #Return lowest decay, with their start-end index
+  }else if (type == "Decay"){
+    indexResult <- which.min(vectorTotalGrowth)
+    valueResult <- vectorTotalGrowth[indexResult]
+    
+    startIndexResult <- vectorStartIndex[indexResult]
+    endIndexResult <- vectorEndIndex[indexResult]
+    
+    return(list(valueResult=valueResult, startIndexResult=startIndexResult, endIndexResult=endIndexResult))
+  }
+}
+
+
+#Corpus
+ResumeRepeated <- function (colName, dateTime, listRepeated){
+  if(listRepeated$RepValue != 0){
+    intro <- "There were some repeated values: "
+    sentence <- ""
+    
+    phrase <- "stayed constant"
+    sentence <- paste(sentence, colName, phrase, "on")
+    
+    timeRepeated <- ""
+    j <- 1
+    for(j in j:listRepeated$RepValue){
+      indexStart <- listRepeated$Start[j]
+      indexEnd <- listRepeated$End[j]
+      
+      #FORMAT: mm/dd/yyyy -> "07/01/2018"
+      startMonth <- as.numeric(substr(dateTime[[indexStart]],1,2))
+      endMonth <- as.numeric(substr(dateTime[[indexEnd]],1,2))
+      
+      startDate <- as.numeric(substr(dateTime[[indexStart]],4,5))
+      endDate <- as.numeric(substr(dateTime[[indexEnd]],4,5))
+      
+      startYear <- as.numeric(substr(dateTime[[indexStart]],7,10))
+      endYear <- as.numeric(substr(dateTime[[indexEnd]],7,10))
+      
+      if(startYear == endYear){
+        if(startMonth == endMonth){
+          #first index
+          if(j==1){
+            #Example: 1 - 8 June 2018
+            timeRepeated <-paste0(startDate, "-", endDate, " ", month.abb[startMonth], " ", startYear)
+            
+            #!first index
+          }else{
+            #Example: 1 - 8 June 2018 , 1 - 8 Aug 2018
+            timeRepeated <-paste0(timeRepeated,",", startDate, "-", endDate, " ", month.abb[startMonth], " ", startYear)
+          }
+          #if month different
+        }else{
+          #first index
+          if(j == 1){
+            #Example: 1 Mar - 8 June 2018
+            timeRepeated <-paste(startDate, month.abb[startMonth], "-",  endDate, month.abb[endMonth], startYear)
+            
+            #!first index
+          }else{
+            #Example: 1 Mar - 8 June 2018
+            timeRepeated <-paste(timeRepeated, ",", startDate, month.abb[startMonth], "-",  endDate, month.abb[endMonth], startYear)
+          }
+        }
+      }else{
+        #first index
+        if(j == 1){
+          #Example: 20 Jan 2017 - 08 Jan 2018
+          timeRepeated <-paste(startDate, month.abb[startMonth], startYear, "-", endDate, month.abb[endMonth], endYear)
+        }else{
+          #Example: 20 Jan 2017 - 08 Jan 2018, 20 Feb 2017 - 08 Feb 2018
+          timeRepeated <-paste(timeRepeated, startDate, month.abb[startMonth], startYear, "-", endDate, month.abb[endMonth], endYear)
+        }
+      }
+      
+    }#end for j
+    sentence <- paste(sentence, timeRepeated,";")
+  }#end if repValue
+  
+  return(sentence)
+}#end function
+
+ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, vectorEnd){
+  print(interpreterResult)
+  
+  if(length(interpreterResult) != 0){
+    mainSentence<-""
+    
+    i<-1
+    reps<- rep(0, length(interpreterResult))
+    while(i < length(interpreterResult) && length(reps[reps == 0]) != 0 ){
+      
+      subSentence <- ""
+      if(reps[i] == 0){
+        reps[i] <- i
+        
+        dateStart <- dataset[["DateTime"]][vectorStart[i]]
+        dateEnd <- dataset[["DateTime"]][vectorEnd[i]]
+
+        dateRange <- LexicalDateRange(dateStart,dateEnd)
+        subSentence <- paste0(dateRange)
+        if(i != length(interpreterResult)){
+          j <- i + 1
+          while(j <= length(interpreterResult)){
+            if(length(reps[reps == 0]) != 0){
+              if(interpreterResult[i] == interpreterResult[j]){
+                reps[j] <- j
+                
+                dateStart <- dataset[["DateTime"]][vectorStart[j]]
+                dateEnd <- dataset[["DateTime"]][vectorEnd[j]]
+                
+                dateRange <- LexicalDateRange(dateStart,dateEnd)
+                subSentence <- paste0(subSentence,", ", dateRange)
+              }
+              j <- j + 1
+            }else{
+              break
+            }
+          }
+        }
+      }
+      
+      cat(reps, "\n")
+      
+      subSentence <- paste(subSentence, colName, "stayed constant at", dataset[[colName]][vectorStart[i]])
+      subSentence <- paste0(subSentence, " (", interpreterResult[i],  ")")
+      mainSentence <- paste0(mainSentence, "During ", subSentence,". ")
+      i <- i + 1
+    }
+    
+  }#end if repValue
+  
+  return(mainSentence)
+}#end function
+
+
+LexicalDateRange  <- function(dateStart, dateEnd){
+  #FORMAT: mm/dd/yyyy -> "07/01/2018"
+  startMonth <- as.numeric(substr(dateStart,1,2))
+  endMonth <- as.numeric(substr(dateEnd,1,2))
+  
+  startDate <- as.numeric(substr(dateStart,4,5))
+  endDate <- as.numeric(substr(dateEnd,4,5))
+  
+  startYear <- as.numeric(substr(dateStart,7,10))
+  endYear <- as.numeric(substr(dateEnd,7,10))
+  
+  timeRepeated <- ""
+  if(startYear == endYear){
+    if(startMonth == endMonth){
+      #Example: 1 - 8 June 2018
+      timeRepeated <-paste0(startDate, "-", endDate, " ", month.abb[startMonth], " ", startYear)
+      
+    #if month different
+    }else{
+      #Example: 1 Mar - 8 June 2018
+      timeRepeated <-paste(startDate, month.abb[startMonth], "-",  endDate, month.abb[endMonth], startYear)
+    }
+  }else{
+    #Example: 20 Jan 2017 - 08 Jan 2018
+    timeRepeated <-paste(startDate, month.abb[startMonth], startYear, "-", endDate, month.abb[endMonth], endYear)
+  }
+  
+  return(timeRepeated)
+}
+
+#------------------------------------------------------------------------------------------------------------------
+# CURERNT ANALYSIS + CORPUS
+#------------------------------------------------------------------------------------------------------------------
+
+CurrentDesc <- function(interpreterNow, statisticalResume, dataset){
   result <- ''
   i <- 1
   for (i in i:length(interpreterNow)) {
@@ -884,12 +1372,13 @@ PredictConc <- function(){
 
 TrendAnalysis <- function(start,dataset){
 	# Dataset is vector, pokonamah ka gigir
+  plot(as.numeric(unlist(dataset)), type="o", col="blue")
   dataset <- dataset[start:length(dataset)]
   if(length(unique(dataset)) == 1){
   	result <- "0"
   }else{
 	  x = c(1:length(dataset))  
-	  plot(x, dataset)
+	  
 	  # lines(sequence, dataset)
 
 	  reg = lm(dataset~x)
@@ -899,12 +1388,78 @@ TrendAnalysis <- function(start,dataset){
 	    result <- "-"
 	  }
   
-	  # print(reg)
-	  # abline(reg,col="red")
+	   # print(reg)
+	   # abline(reg,col="red")
   }
   
+
+# 	abline(reg2,col="red")
   return(result)
 }
 
+#----------------------------- Microplanning for Prediction ------------------------------------------# 
 
+# Lexicalisation proses
+
+# Source = Ramos
+# Function
+
+LD_Compare <- function (index_data){
+  #Compute Index Variation
+  i=1; n=length(index_data); IV<-c(0,0);
+  for(i in i:n){
+    if(i<n){
+      IV[i]<-((index_data[[i+1]])-(index_data[[i]]))	
+    }else{
+      IV[i]<-index_data[[i]]
+      
+    }
+  }
+  
+  #Apply Rules
+  i=1; IVL<-c(0,0)
+  for(i in i:n){
+    if(IV[i]>0){
+      IVL[i]="+"
+    }else if(IV[i]<0){
+      IVL[i]="-"
+    }else{
+      IVL[i]="0"
+    }
+  }
+  print(IVL)
+  x<-TrendDesc_template(IVL)
+  return(x)
+}
+
+TrendDesc_template <- function (IVL,data){
+  if((IVL[1]=="0")&&(IVL[2]=="0")){
+    TrendDesc <- "stable"
+  }
+  if(((IVL[1]=="+")&&(IVL[2]=="-"))||((IVL[1]=="-")&&(IVL[2]=="+"))){
+    TrendDesc <- "mediumChange"
+  }
+  if(((IVL[1]=="+")&&(IVL[2]=="0"))||((IVL[1]=="-")&&(IVL[2]=="0"))){
+    TrendDesc <- "startChange"
+  }
+  if(((IVL[1]=="0")&&(IVL[2]=="+"))||((IVL[1]=="0")&&(IVL[2]=="-"))){
+    TrendDesc <- "endChange"
+  }
+  if(((IVL[1]=="+")&&(IVL[2]=="+"))||((IVL[1]=="-")&&(IVL[2]=="-"))){
+    TrendDesc <- "progressiveChange"
+  }
+  return(TrendDesc)
+}
+
+change_word_bank_AQ <- function (fragmentCode){
+  phraseAQ <- read.table(file="wordbank/AQ_phrase_bank.csv", sep=",", header=TRUE)
+  n=length(phraseAQ); i=1; 
+  for(i in i:n){
+    m=colnames(phraseAQ[i])
+    if(fragmentCode==m){
+      j=runif(1,1,n+1)
+      return(phraseAQ[j,i])
+    }
+  }
+}
 
