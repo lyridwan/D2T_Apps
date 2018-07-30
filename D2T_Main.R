@@ -1,5 +1,5 @@
-#setwd("~/GitHub/D2T_Apps")
-setwd("~/Programming/GitHub/D2T_Apps")
+setwd("~/GitHub/D2T_Apps")
+#setwd("~/Programming/GitHub/D2T_Apps")
 # INITIALIZING
 source("D2T_Machine.R", local = TRUE)
 
@@ -64,6 +64,28 @@ vectorEndIndex <- c()
 vectorGrowth <- c()
 for(i in i:length(datasetWithoutDate)){
   listColumn <- datasetWithoutDate[[i]]
+  listHighestGrowthAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Growth")
+  
+  vectorGrowth[i] <-listHighestGrowthAnalysisResult$valueResult
+  vectorStartIndex[i] <-listHighestGrowthAnalysisResult$startIndexResult
+  vectorEndIndex[i] <-listHighestGrowthAnalysisResult$endIndexResult
+  
+  #vectorInterpreterRes[[i]] <- MembershipFuzzy(vectorGrowth, TrendFuzzyGenerator(columnName[i], statisticalResume))
+  vectorInterpreterIndex[i] <- MembershipFuzzy(vectorGrowth[i], TrendFuzzyGenerator(columnName[i], statisticalResume))$InterpreterIndex
+  
+}
+vectorEndIndex <- vectorEndIndex + 1
+dfHighsestGrowth <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
+dfHighsestGrowth <- dfHighsestGrowth[dfHighsestGrowth$vectorInterpreterIndex == 5,]
+dfHighsestGrowth$colName <- rownames(dfHighsestGrowth)
+#exception
+DocPlanHighestGrowthDecay(datasetWithoutDate, dfHighsestGrowth, type = "Growth")
+
+
+#highsest growth analysis
+i <- 1
+for(i in i:length(datasetWithoutDate)){
+  listColumn <- datasetWithoutDate[[i]]
   listHighestGrowthAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Decay")
   
   vectorGrowth[i] <-listHighestGrowthAnalysisResult$valueResult
@@ -74,6 +96,8 @@ for(i in i:length(datasetWithoutDate)){
   vectorInterpreterIndex[i] <- MembershipFuzzy(vectorGrowth[i], TrendFuzzyGenerator(columnName[i], statisticalResume))$InterpreterIndex
   
 }
+
+vectorEndIndex <- vectorEndIndex+1
 
 #ResumeHighestGrowth(vectorInterpreterRes)
 

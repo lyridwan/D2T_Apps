@@ -1,10 +1,10 @@
 
 #Data-to-text System - Ahmad - Ridwan
-setwd("~/Programming/GitHub/D2T_Apps")
+#setwd("~/Programming/GitHub/D2T_Apps")
 #----------------------- Packages Requirement -----------------------#
 #1. Shiny R
 # install.packages("shiny") #-- server & GUI
-library(shiny)
+#library(shiny)
 
 #2. Smooth 
 # install.packages("smooth") -> #predicting  with ex.smoothing
@@ -12,19 +12,19 @@ library(shiny)
 
 #3. Gradient Descent Packages 
 # install.packages("gradDescent")
-library(gradDescent)
+#library(gradDescent)
 
 #4. Time-Series data object
 # install.packages("xts")
-library(xts)
+#library(xts)
 
 #4. Time-Series data object
 #install.packages("sets")
-library(sets)
+#library(sets)
 
 #5. plotrix
 #install.packages("plotrix")
-library(plotrix)
+#library(plotrix)
 
 #5. ade4
 #install.packages("ade4")
@@ -1473,3 +1473,13 @@ change_word_bank_AQ <- function (fragmentCode){
   }
 }
 
+DocPlanHighestGrowthDecay(dataset, listGrowth, type="Growth"){
+  result <- c()
+  rowNames <- rownames(dataset)
+  #JPY increased greatly (4.3530 point) from 1st Aug to 1st Oct 2008
+  for(i in i:nrow(dataset)){
+    sentence <- 
+    
+    result[[]]
+  }
+}
