@@ -311,7 +311,7 @@ MembershipClassifier <- function(value, corpus){
 #TO BE UPDATED!!!!
 MembershipFuzzy <- function(value, corpus){
   if(is.null(corpus)){
-    return (list(InterpreterResult = as.character("Constant"), InterpreterIndex = NA))
+    return (list(InterpreterResult = as.character("Constant"), InterpreterIndex = 0))
   }
   i <- 1;
   n <- nrow(corpus);
@@ -828,8 +828,18 @@ ReadResumeIntro <- function(dataset, ColName, source="dataset"){
 
 
 ResumeTrend <- function(statisticalResume){
+  #freq <- c("+"=0,"-"=0,"0"=0)
   freq <- table(statisticalResume["Trend"])
   result <- ""
+  print(freq)
+  if(as.numeric(freq)[1] == nrow(statisticalResume) && names(freq[1]) == "+"){
+    result <- "All trends is increased from time to time"
+    return(result)
+  }else if(as.numeric(freq)[1] == nrow(statisticalResume) && names(freq[1]) == "-"){
+    result <- "All trends is decreased from time to time"
+    return(result)
+  }
+  
   
   #FIRST CONDITION
   if(freq["+"] <= freq["-"] && freq["+"] <= freq["0"]){

@@ -5,7 +5,7 @@ source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
-dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
+dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=TRUE)
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
 
@@ -57,22 +57,25 @@ for(i in i:length(datasetWithoutDate)){
 #highsest growth analysis
 i <- 1
 vectorHighestGrowthAnalysisResult <- c()
-vectorInterpreterRes <- c()
+vectorInterpreterRes <- list()
+vectorInterpreterIndex <- c()
 vectorStartIndex <- c()
 vectorEndIndex <- c()
+vectorGrowth <- c()
 for(i in i:length(datasetWithoutDate)){
   listColumn <- datasetWithoutDate[[i]]
-  listHighestGrowthAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Growth")
+  listHighestGrowthAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Decay")
   
-  vectorGrowth <-listHighestGrowthAnalysisResult$valueResult
+  vectorGrowth[i] <-listHighestGrowthAnalysisResult$valueResult
   vectorStartIndex[i] <-listHighestGrowthAnalysisResult$startIndexResult
   vectorEndIndex[i] <-listHighestGrowthAnalysisResult$endIndexResult
   
-  vectorInterpreterRes[i] <- MembershipFuzzy(vectorGrowth, TrendFuzzyGenerator(columnName[i], statisticalResume))$InterpreterIndex
+  #vectorInterpreterRes[[i]] <- MembershipFuzzy(vectorGrowth, TrendFuzzyGenerator(columnName[i], statisticalResume))
+  vectorInterpreterIndex[i] <- MembershipFuzzy(vectorGrowth[i], TrendFuzzyGenerator(columnName[i], statisticalResume))$InterpreterIndex
   
 }
 
-
+#ResumeHighestGrowth(vectorInterpreterRes)
 
 # DATA INTERPRETATION
 interpreterNow <- DataInterpreter(datasetNow,statisticalResume)
@@ -125,15 +128,17 @@ for(i in i:length(listRepeatedAnalysisResult)){
 }
 
 
-i <- 1
-vectorRepeatedInterpretResult <- c()
-selectedColumn <- columnName[maxIndex]
-for(i in i:length(listRepeatedAnalysisResult[[maxIndex]]$Start)){
-  selectedIndex <-listRepeatedAnalysisResult[[maxIndex]]$Start[i]
-  selectedValue <- datasetWithoutDate[[selectedColumn]][selectedIndex]
-  print(selectedValue)
-  
-  vectorRepeatedInterpretResult[[i]] <- DataInterpreterAdjective(selectedValue, selectedColumn, statisticalResume)$InterpreterResult
+if(maxValue != 0){
+  i <- 1
+  vectorRepeatedInterpretResult <- c()
+  selectedColumn <- columnName[maxIndex]
+  for(i in i:length(listRepeatedAnalysisResult[[maxIndex]]$Start)){
+    selectedIndex <-listRepeatedAnalysisResult[[maxIndex]]$Start[i]
+    selectedValue <- datasetWithoutDate[[selectedColumn]][selectedIndex]
+    print(selectedValue)
+    
+    vectorRepeatedInterpretResult[[i]] <- DataInterpreterAdjective(selectedValue, selectedColumn, statisticalResume)$InterpreterResult
+  }
 }
 
 
@@ -141,8 +146,13 @@ resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName)
 trendIntro <- ReadIntro(type="Trend")
 resumeTrend <- paste0(trendIntro," ",ResumeTrend(statisticalResume),".")
 
-resumeRepeated <- ResumeRepeated2(columnName[[maxIndex]], dataset, vectorRepeatedInterpretResult, listRepeatedAnalysisResult[[maxIndex]]$Start, listRepeatedAnalysisResult[[maxIndex]]$End)
-resumeRepeated <- paste("There were some repeated value more than 4 days: ", resumeRepeated)
+if(maxValue != 0){
+  resumeRepeated <- ResumeRepeated2(columnName[[maxIndex]], dataset, vectorRepeatedInterpretResult, listRepeatedAnalysisResult[[maxIndex]]$Start, listRepeatedAnalysisResult[[maxIndex]]$End)
+  resumeRepeated <- paste("There were some repeated value more than 4 days: ", resumeRepeated)
+  }else{
+  resumeRepeated <- "There was no repeated values within 4 days or more, every value changed from time to time."
+}
+
 
 
 
