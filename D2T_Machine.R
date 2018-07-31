@@ -1519,5 +1519,34 @@ DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){
 }
 
 AggResumeGrowth <- function(vectorGrowth, vectorDecay){
+  i<-1
   
+  sentence1 <- ""
+  if(length(vectorGrowth) != 0){
+    for(i in i:length(vectorGrowth)){
+      if(i == length(vectorGrowth)){
+        sentence1 <- paste0(sentence1, vectorGrowth[i])
+      }else{
+        sentence1 <- paste0(sentence1, vectorGrowth[i], ", ")
+      }
+    }
+    sentence1 <- paste0(sentence1,".")
+  }
+  
+  sentence2 <- ""
+  if(length(vectorDecay) != 0){
+    sentence2 <- "While "
+    i<-1
+    for(i in i:length(vectorDecay)){
+      if(i == length(vectorDecay)){
+        sentence2 <- paste0(sentence2, vectorDecay[i])
+      }else{
+        sentence2 <- paste0(sentence2, vectorDecay[i], ", ")
+      }
+    }
+    sentence2 <- paste0(sentence2,".")
+  }
+  
+  result <- paste(sentence1, sentence2)
+  return(result)
 }

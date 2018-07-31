@@ -6,7 +6,7 @@ source("D2T_Machine.R", local = TRUE)
 
 # READ DATA
 dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=TRUE)
-dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
+# dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
 
@@ -200,7 +200,7 @@ resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGro
 
 
 # 
-# currentIntro <- ChangeTimeDesc(ReadIntro(type="Current"),dataset["DateTime"])
+currentIntro <- ChangeTimeDesc(ReadIntro(type="Current"),dataset["DateTime"])
 # currentDesc <- CurrentDesc(interpreterNow, statisticalResume, dataset)
 # currentAglast <- TrendAnalysis(length(dataset)-5, dataset[[2]])
 # currentAgresume <- "and now is the higest from overall."
