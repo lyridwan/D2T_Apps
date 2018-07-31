@@ -1,14 +1,15 @@
-#setwd("~/GitHub/D2T_Apps")
-setwd("~/Programming/GitHub/D2T_Apps")
+setwd("~/GitHub/D2T_Apps")
+#setwd("~/Programming/GitHub/D2T_Apps")
 # INITIALIZING
 source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
-dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=TRUE)
+ dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=TRUE)
 # dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
+datasetInterval <- DataInterval(dataset[2,"DateTime"], dataset[1,"DateTime"])
 
 #  
 columnName <- colnames(dataset[ , colnames(dataset) != "DateTime"])
@@ -200,8 +201,10 @@ resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGro
 
 
 # 
-currentIntro <- ChangeTimeDesc(ReadIntro(type="Current"),dataset["DateTime"])
-# currentDesc <- CurrentDesc(interpreterNow, statisticalResume, dataset)
+currentIntro <- ReadCurrentIntro(dataset[nrow(dataset),"DateTime"], DataInterval(dataset[2,"DateTime"], dataset[1,"DateTime"]))
+currentDesc <- CurrentDesc(interpreterNow, vectorTrendDescriptionAnalysis, datasetWithoutDate)
+currentResult <- paste(currentIntro, currentDesc)
+
 # currentAglast <- TrendAnalysis(length(dataset)-5, dataset[[2]])
 # currentAgresume <- "and now is the higest from overall."
 # 
@@ -220,5 +223,5 @@ currentIntro <- ChangeTimeDesc(ReadIntro(type="Current"),dataset["DateTime"])
 
 # source("D2T_Machine.R", local = TRUE)
 resumeResult
-# currentResult
+currentResult
 # predictResult

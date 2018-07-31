@@ -761,6 +761,46 @@ ChangeTimeDesc <- function(source, dataset, type = "0"){
   return (result)
 }
 
+DataInterval <- function(time1, time2, type="default"){
+  time1 <- strptime(time1, "%m/%d/%Y %H:%M")
+  time2 <- strptime(time2, "%m/%d/%Y %H:%M")
+  
+  interval <- difftime(time1, time2)
+  interval <- as.numeric(interval, units = "hours")
+  
+  if(type == "interval"){
+    if(interval == 1){
+      interval <- "hourly"
+    }else if(interval == 24){
+      interval <- "daily"
+    }else if(interval == 168){
+      interval <- "weekly"
+    }else if(interval == 720 || interval == 744){
+      interval <- "monthly"
+    }else if(interval == 8760 || interval == 8736){
+      interval <- "yearly"
+    }else{
+      interval <- ""
+    }
+  }else{
+    if(interval == 1){
+      interval <- "hour"
+    }else if(interval == 24){
+      interval <- "day"
+    }else if(interval == 168){
+      interval <- "week"
+    }else if(interval == 720 || interval == 744){
+      interval <- "month"
+    }else if(interval == 8760 || interval == 8736){
+      interval <- "year"
+    }else{
+      interval <- ""
+    }
+  }
+  
+  return(interval)
+}
+
 #------------------------------------------------------------------------------------------------------------------
 # INTRO
 #------------------------------------------------------------------------------------------------------------------
@@ -784,7 +824,7 @@ ReadIntro <- function(source="Data", type="General"){
     # return("Woops no data intro!");
 }
 
-ReadResumeIntro <- function(dataset, ColName, source="dataset"){
+ReadResumeIntro <- function(dataset, ColName, source="data"){
   
   corpus <- as.matrix(read.table(file=paste0("Corpus/","ResumeIntro.csv"), header=FALSE, sep=';'))
 
@@ -796,7 +836,7 @@ ReadResumeIntro <- function(dataset, ColName, source="dataset"){
   result <- corpus[random_value]
 
   #Replaceing Data Source
-  result <- gsub("@source", "dataset", result)
+  result <- gsub("@source", source, result)
 
   #Replacing Data Range
   date1 <- dataset[1, ]
@@ -829,6 +869,20 @@ ReadResumeIntro <- function(dataset, ColName, source="dataset"){
   return (result)
 }
 
+ReadCurrentIntro <- function(dateTime, interval){
+  corpus <- as.matrix(read.table(file=paste0("Corpus/CurrentIntro.csv"), header=FALSE , sep = ';'))
+  
+  n <- length(corpus)
+  random_value <- as.integer(runif(1,1,n+0.5))
+  
+  result <- corpus[random_value]
+  
+  result <- gsub("@date", interval, result)
+  result <- gsub("@time", dateTime, result)
+  
+  return(result)
+}
+
 #------------------------------------------------------------------------------------------------------------------
 # RESUME ANALYSIS
 #------------------------------------------------------------------------------------------------------------------
@@ -839,11 +893,13 @@ ResumeTrend <- function(statisticalResume){
   freq <- table(statisticalResume["Trend"])
   result <- ""
   print(freq)
+  
+  #if thre only 1 trend
   if(as.numeric(freq)[1] == nrow(statisticalResume) && names(freq[1]) == "+"){
-    result <- "All trends is increased from time to time"
+    result <- "all trends were increasing from time to time"
     return(result)
   }else if(as.numeric(freq)[1] == nrow(statisticalResume) && names(freq[1]) == "-"){
-    result <- "All trends is decreased from time to time"
+    result <- "all trends were decreasing from time to time"
     return(result)
   }
   
@@ -1335,44 +1391,59 @@ LexicalDateRange  <- function(dateStart, dateEnd){
 # CURERNT ANALYSIS + CORPUS
 #------------------------------------------------------------------------------------------------------------------
 
-CurrentDesc <- function(interpreterNow, statisticalResume, dataset){
-  result <- ''
-  i <- 1
-  for (i in i:length(interpreterNow)) {
-    if(i == 1 || i == length(interpreterNow)){  
-      result <- paste0(result, colnames(interpreterNow[i])," is ",interpreterNow[1,i])
-    }else{
-      result <- paste0(result,", ", colnames(interpreterNow[i])," is ",interpreterNow[1,i])
-    }
-
-    if(as.character(statisticalResume[statisticalResume$ColName == colnames(interpreterNow[i]),"MaxIndex"]) == as.character(nrow(dataset))){
-      result <- paste0(result," this is the highest value of @TimeDesc ")
-	}else if(as.character(statisticalResume[statisticalResume$ColName == colnames(interpreterNow[i]),"MinIndex"]) == as.character(nrow(dataset))){
-      result <- paste0(result," this is the lowest value of @TimeDesc ")
-	}
-
-	trendLastFive <- TrendAnalysis(nrow(dataset)-3, dataset[[colnames(interpreterNow[i])]])
-  if(trendLastFive == "-"){
-    trendLastFive <- "decreased"
-  }else if(trendLastFive == "+"){
-    trendLastFive <- "increased"
-  }else{
-    trendLastFive <- "constant"
-  }
+CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
+  result <- ""
   
-    result <- paste0(result," trend in last 3 data is ",trendLastFive)
-
-  if(i == length(interpreterNow)-1){
-      result <- paste0(result," and ")
+  if(length(vectorTrendDesc) != 0){
+    mainSentence<-""
+    
+    i<-1
+    reps<- rep(0, length(vectorTrendDesc))
+    while(i <= length(vectorTrendDesc) && length(reps[reps == 0]) != 0 ){
+      
+      subSentence <- ""
+      if(reps[i] == 0){
+        reps[i] <- i
+        
+        colName <- interpreterResult$Colname[i]
+        
+        subSentence <- paste0(colName)
+        if(i != length(vectorTrendDesc)){
+          j <- i + 1
+          while(j <= length(vectorTrendDesc)){
+            if(length(reps[reps == 0]) != 0){
+              if(interpreterResult$InterpreterResult[i] == interpreterResult$InterpreterResult[j] && vectorTrendDesc[i] == vectorTrendDesc[j]){
+                reps[j] <- j
+                
+                
+                
+                colName <- interpreterResult$Colname[j]
+                
+                subSentence <- paste0(subSentence,", ", colName)
+              }
+              j <- j + 1
+            }else{
+              
+              break
+            }
+          }
+        }
+        interpreter <- interpreterResult$InterpreterResult[i]
+        phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
+        
+        subSentence <- paste(subSentence, phrase, interpreter)
+        mainSentence <- paste0(mainSentence, subSentence," point. ")
+      }
+      cat("reps:",reps,"\n")
+      
+      i <- i + 1
     }
-  }
-
-  if(grepl("@TimeDesc",result)){
-  	result <- ChangeTimeDesc(result, dataset["DateTime"], type="other")
-  }
-
-  return(result)
+    
+  }#end if repValue
+  
+  return(mainSentence)
 }
+
 CurrentAglast <- function(){
 
 }
@@ -1494,9 +1565,9 @@ DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){
       
       sentence <- ""
       if(type == "Growth"){
-        phrase <- "increase greatly"
+        phrase <- "increased greatly"
       }else if(type == "Decay"){
-        phrase <- "decrease greatly"
+        phrase <- "decreased greatly"
       }
       # print(dfGrowth$vectorStartIndex[1])
       # print(dfGrowth$vectorEndIndex[1])
@@ -1507,7 +1578,7 @@ DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){
       dateRange <- LexicalDateRange(as.character(dateTime[dfGrowth$vectorStartIndex[i]]), as.character(dateTime[dfGrowth$vectorEndIndex[i]]))
       # print(dateRange)
       
-      sentence <- paste0(dfGrowth$colName[i], " ", phrase, " (", dfGrowth$vectorGrowth[i],") from ", dateRange)
+      sentence <- paste0(dfGrowth$colName[i], " ", phrase, " (", dfGrowth$vectorGrowth[i]," points) from ", dateRange)
       
       result[i] <- as.character(sentence)
     }
@@ -1525,12 +1596,11 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
   if(length(vectorGrowth) != 0){
     for(i in i:length(vectorGrowth)){
       if(i == length(vectorGrowth)){
-        sentence1 <- paste0(sentence1, vectorGrowth[i])
+        sentence1 <- paste0(sentence1, " and ", vectorGrowth[i], ".")
       }else{
         sentence1 <- paste0(sentence1, vectorGrowth[i], ", ")
       }
     }
-    sentence1 <- paste0(sentence1,".")
   }
   
   sentence2 <- ""
@@ -1539,12 +1609,11 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
     i<-1
     for(i in i:length(vectorDecay)){
       if(i == length(vectorDecay)){
-        sentence2 <- paste0(sentence2, vectorDecay[i])
+        sentence2 <- paste0(sentence2, " and ", vectorDecay[i], ".")
       }else{
         sentence2 <- paste0(sentence2, vectorDecay[i], ", ")
       }
     }
-    sentence2 <- paste0(sentence2,".")
   }
   
   result <- paste(sentence1, sentence2)
