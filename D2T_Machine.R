@@ -358,6 +358,13 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
   maxRange <- as.character(statisticalResume[statisticalResume$ColName == type, "MaxValue"])
   minRange <- as.character(statisticalResume[statisticalResume$ColName == type, "MinValue"])
   
+  #if minRange absolute value  more than maxRange
+  if(abs(as.double(minRange)) > abs(as.double(maxRange))){
+    temp <- abs(as.double(maxRange))
+    maxRange <- abs(as.double(minRange))
+    minRange <- temp
+  }
+  
   # corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
   # maxRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu", "MaxValue"])
   # minRange <- as.character(statisticalResume[statisticalResume$ColName == "Tahu", "MinValue"])
@@ -431,8 +438,8 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
   }
   
   #exception for first and last point
-  listGeneralPartition[[1]][1] <- as.double(as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"]))*-1
-  listGeneralPartition[[length(listGeneralPartition)]][length(listGeneralPartition[[1]])] <- as.double(as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"]))
+  #listGeneralPartition[[1]][1] <- maxRange*-1
+  #listGeneralPartition[[length(listGeneralPartition)]][length(listGeneralPartition[[1]])] <- maxRange
   
   
   v1 <-unlist(lapply(listGeneralPartition, `[[`, 1))
@@ -1293,6 +1300,9 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
 
 LexicalDateRange  <- function(dateStart, dateEnd){
   #FORMAT: mm/dd/yyyy -> "07/01/2018"
+  
+  print(dateStart)
+  print(dateEnd)
   startMonth <- as.numeric(substr(dateStart,1,2))
   endMonth <- as.numeric(substr(dateEnd,1,2))
   
@@ -1473,13 +1483,41 @@ change_word_bank_AQ <- function (fragmentCode){
   }
 }
 
-DocPlanHighestGrowthDecay(dataset, listGrowth, type="Growth"){
-  result <- c()
-  rowNames <- rownames(dataset)
-  #JPY increased greatly (4.3530 point) from 1st Aug to 1st Oct 2008
-  for(i in i:nrow(dataset)){
-    sentence <- 
+DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){
+  if(length(dfGrowth) != 0){
+    result <- c()
+    #JPY increased greatly (4.3530 point) from 1st Aug to 1st Oct 2008
     
-    result[[]]
+    i<-1
+    for(i in i:nrow(dfGrowth)){
+      # index <- rownames(dfGrowth)[i]
+      
+      sentence <- ""
+      if(type == "Growth"){
+        phrase <- "increase greatly"
+      }else if(type == "Decay"){
+        phrase <- "decrease greatly"
+      }
+      # print(dfGrowth$vectorStartIndex[1])
+      # print(dfGrowth$vectorEndIndex[1])
+      # 
+      # print(as.character(dateTime[dfGrowth$vectorStartIndex[i]]))
+      # print(as.character(dateTime[dfGrowth$vectorEndIndex[i]]))
+      
+      dateRange <- LexicalDateRange(as.character(dateTime[dfGrowth$vectorStartIndex[i]]), as.character(dateTime[dfGrowth$vectorEndIndex[i]]))
+      # print(dateRange)
+      
+      sentence <- paste0(dfGrowth$colName[i], " ", phrase, " (", dfGrowth$vectorGrowth[i],") from ", dateRange)
+      
+      result[i] <- as.character(sentence)
+    }
+  }else{
+    result <- ""
   }
+  
+  return(result)
+}
+
+AggResumeGrowth <- function(vectorGrowth, vectorDecay){
+  
 }

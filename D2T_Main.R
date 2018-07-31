@@ -1,11 +1,12 @@
-setwd("~/GitHub/D2T_Apps")
-#setwd("~/Programming/GitHub/D2T_Apps")
+#setwd("~/GitHub/D2T_Apps")
+setwd("~/Programming/GitHub/D2T_Apps")
 # INITIALIZING
 source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
 dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=TRUE)
+dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
 
@@ -74,15 +75,19 @@ for(i in i:length(datasetWithoutDate)){
   vectorInterpreterIndex[i] <- MembershipFuzzy(vectorGrowth[i], TrendFuzzyGenerator(columnName[i], statisticalResume))$InterpreterIndex
   
 }
-vectorEndIndex <- vectorEndIndex + 1
-dfHighsestGrowth <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
-dfHighsestGrowth <- dfHighsestGrowth[dfHighsestGrowth$vectorInterpreterIndex == 5,]
-dfHighsestGrowth$colName <- rownames(dfHighsestGrowth)
 #exception
-DocPlanHighestGrowthDecay(datasetWithoutDate, dfHighsestGrowth, type = "Growth")
+vectorEndIndex <- vectorEndIndex + 1
 
+#Combine all process into df
+dfHighestGrowth <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
+highestInterpreterIndex <- max(vectorInterpreterIndex)
 
-#highsest growth analysis
+dfHighestGrowth <- dfHighestGrowth[dfHighestGrowth$vectorInterpreterIndex == 5,]
+dfHighestGrowth$colName <- columnName[as.numeric(rownames(dfHighestGrowth))]
+
+vectorSentenceHighestGrowth <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfHighestGrowth, type = "Growth")
+
+#highsest Decay analysis
 i <- 1
 for(i in i:length(datasetWithoutDate)){
   listColumn <- datasetWithoutDate[[i]]
@@ -97,9 +102,21 @@ for(i in i:length(datasetWithoutDate)){
   
 }
 
-vectorEndIndex <- vectorEndIndex+1
+#exception
+vectorEndIndex <- vectorEndIndex + 1
 
-#ResumeHighestGrowth(vectorInterpreterRes)
+#Combine all process into df
+dfHighestDecay <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
+highestInterpreterIndex <- min(vectorInterpreterIndex)
+
+dfHighestDecay <- dfHighestDecay[dfHighestDecay$vectorInterpreterIndex == 1,]
+dfHighestDecay$colName <- columnName[as.numeric(rownames(dfHighestDecay))]
+
+vectorSentenceHighestDecay <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfHighestDecay, type = "Decay")
+
+
+
+
 
 # DATA INTERPRETATION
 interpreterNow <- DataInterpreter(datasetNow,statisticalResume)
@@ -174,10 +191,12 @@ if(maxValue != 0){
   resumeRepeated <- ResumeRepeated2(columnName[[maxIndex]], dataset, vectorRepeatedInterpretResult, listRepeatedAnalysisResult[[maxIndex]]$Start, listRepeatedAnalysisResult[[maxIndex]]$End)
   resumeRepeated <- paste("There were some repeated value more than 4 days: ", resumeRepeated)
   }else{
-  resumeRepeated <- "There was no repeated values within 4 days or more, every value changed from time to time."
+  resumeRepeated <- "There were no repeating values within 4 days or more, every value changed from time to time."
 }
 
 
+resumeHighestGrowth <- AggResumeGrowth(vectorSentenceHighestGrowth, vectorSentenceHighestDecay)
+resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGrowth)
 
 
 # 
@@ -193,7 +212,7 @@ if(maxValue != 0){
 
 
 
-resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated)
+
 # currentResult <- paste(currentIntro, currentDesc, currentAglast, currentAgresume)
 # currentResult <- paste(currentIntro, currentDesc)
 
