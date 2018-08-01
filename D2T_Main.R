@@ -5,11 +5,11 @@ source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
- dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=TRUE)
-# dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
+# dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=TRUE)
+dataset <- read.table(file="Datasets/dummy1.csv", sep=",", header=TRUE)
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
-datasetInterval <- DataInterval(dataset[2,"DateTime"], dataset[1,"DateTime"])
+datasetInterval <- DataInterval(dataset[2,"DateTime"], dataset[1,"DateTime"], type = "intro")
 
 #  
 columnName <- colnames(dataset[ , colnames(dataset) != "DateTime"])
@@ -201,14 +201,14 @@ resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGro
 
 
 # 
-currentIntro <- ReadCurrentIntro(dataset[nrow(dataset),"DateTime"], DataInterval(dataset[2,"DateTime"], dataset[1,"DateTime"]))
+currentIntro <- ReadCurrentIntro(dataset[nrow(dataset),"DateTime"], datasetInterval)
 currentDesc <- CurrentDesc(interpreterNow, vectorTrendDescriptionAnalysis, datasetWithoutDate)
 currentResult <- paste(currentIntro, currentDesc)
 
 # currentAglast <- TrendAnalysis(length(dataset)-5, dataset[[2]])
 # currentAgresume <- "and now is the higest from overall."
 # 
-# predictIntro <- ReadIntro(type="Predict")
+predictIntro <- ReadIntro(type="Predict")
 # predictContent <- "Content content content."
 # predictConc <- "Conclussion from predict result."
 

@@ -782,6 +782,20 @@ DataInterval <- function(time1, time2, type="default"){
     }else{
       interval <- ""
     }
+  }else if(type == "intro"){
+    if(interval == 1){
+      interval <- "This hour"
+    }else if(interval == 24){
+      interval <- "Today"
+    }else if(interval == 168){
+      interval <- "This week"
+    }else if(interval == 720 || interval == 744){
+      interval <- "This month"
+    }else if(interval == 8760 || interval == 8736){
+      interval <- "This year"
+    }else{
+      interval <- ""
+    }
   }else{
     if(interval == 1){
       interval <- "hour"
@@ -1416,10 +1430,33 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
                 reps[j] <- j
                 
                 
-                
                 colName <- interpreterResult$Colname[j]
                 
-                subSentence <- paste0(subSentence,", ", colName)
+                #isGroupingAvailable: Vector, TRUE OR FALSE
+                indicator <- c("TRUE"=0, "FALSE"=0)
+                isGroupingAvailable <- (interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i]
+                isGroupingAvailable <- table(isGroupingAvailable)
+                
+                
+                if(!is.na(isGroupingAvailable["FALSE"]) && !is.na(isGroupingAvailable["TRUE"])){
+                  indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
+                  indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
+                }else if(!is.na(isGroupingAvailable["TRUE"])){
+                  indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
+                }else if(!is.na(isGroupingAvailable["FALSE"])){
+                  indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
+                }
+                
+                print((interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i])
+                print(indicator)
+                #if there's nothing to grouping, then put "and" on the end of grouping
+                if(as.numeric(indicator["TRUE"]) > 1){
+                  subSentence <- paste0(subSentence,", ", colName)
+                }else{
+                  subSentence <- paste0(subSentence,", and ", colName)
+                }
+                
+                
               }
               j <- j + 1
             }else{
@@ -1432,9 +1469,9 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
         phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
         
         subSentence <- paste(subSentence, phrase, interpreter)
-        mainSentence <- paste0(mainSentence, subSentence," point. ")
+        mainSentence <- paste0(mainSentence, subSentence,". ")
       }
-      cat("reps:",reps,"\n")
+      cat("reps:", i, " ",reps,"\n")
       
       i <- i + 1
     }
@@ -1619,3 +1656,62 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
   result <- paste(sentence1, sentence2)
   return(result)
 }
+
+#Function for get the prefix from the pattern
+KMP_Prefix <- function(pattern){
+  
+  #declare variable
+  n_pattern <- length(pattern)
+  prefix <- c(0)
+  a <- 0
+  
+  #pattern making
+  for(b in 2:n_pattern){
+    while(a > 0 && pattern[a+1] != pattern[b]){
+      a <- prefix[a]
+    }
+    if(pattern[a+1] == pattern[b]){
+      a <- a+1
+    }
+    prefix[b] <- a
+  }
+  
+  #return the result
+  return(prefix)
+  
+}
+
+#-------------------------------------------------------------------
+
+#Function to seacrh the pattern in the string
+KMP <- function(string, pattern){
+  
+  #inisiasi variabel
+  prefix <- KMP_Prefix(pattern)
+  n_string <- length(string)
+  n_pattern <- length(pattern)
+  index <- c()
+  total <- 0
+  i <- 0
+  
+  #Perulangan sesuai dengan jumlah string
+  for(j in 1:n_string){
+    while(i > 0 && pattern[i+1] != string[j]){
+      i <- prefix[i]
+    }
+    if(pattern[i+1] == string[j]){
+      i <- i+1
+    }
+    if(i == n_pattern){
+      index <- c(index, j-n_pattern+1)
+      total <- total+1
+      i <- prefix[i]
+    }
+  }
+  
+  return(index)
+  
+}
+
+
+KMP(c(1,2,3,5,2,4,2,1,3,4,4,2,1), c(3,5,2,4,2))
