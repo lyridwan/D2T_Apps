@@ -1,6 +1,6 @@
 Category,v1,v2,v3,v4
-light,0,0,2.5,2.75
-moderate,2.5,2.75,7.5,11.25
-heavy,7.5,11.25,15,30
-intense,15,30,50,60
-torential,50,60,70,80
+light rain,0,0,2.5,2.75
+moderate rain,2.5,2.75,7.5,11.25
+heavy rain,7.5,11.25,15,30
+intense rain,15,30,50,60
+torential rain,50,60,70,80

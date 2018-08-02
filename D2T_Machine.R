@@ -8,7 +8,7 @@
 
 #2. Smooth 
 # install.packages("smooth") -> #predicting  with ex.smoothing
-#library(smooth)
+library(smooth)
 
 #3. Gradient Descent Packages 
 # install.packages("gradDescent")
@@ -16,7 +16,7 @@
 
 #4. Time-Series data object
 # install.packages("xts")
-#library(xts)
+library(xts)
 
 #4. Time-Series data object
 #install.packages("sets")
@@ -55,27 +55,21 @@
 #Climate data prediction : Cloud Coverage,Average Temperature,Wind Speed,Wind Direction,Rainfall
 #drop date
 
-PredictDataset<-function(dataset){
-drops <- c("DateTime")
-# datasetWithoutDate <- dataset[ , !(names(dataset) %in% drops)]
-	datasetWithoutDate <- dataset[, names(dataset) != "DateTime"]
-  i=1; n=length(datasetWithoutDate)
-	x<-list()
-	y<-matrix()
-	for(i in i:n){
-		#change dataset into time-series dataset (XTS)
-    x[[i]] <- xts(datasetWithoutDate[[i]],order.by=as.POSIXct(dataset$DateTime))
-		# x[[i]] <- xts(datasetWithoutDate[[i]],as.POSIXct(strptime(dataset$DateTime, "%Y-%m-%d %H:%M:%S")))
-		#forecast with (ETS)
-		y[i] <- forecast(x[[i]],h=1)$mean[1]
-	}
-	i=1
-	for(i in i:n){
-		names(y)[i]<-paste(colnames(datasetWithoutDate[i]))
-	}
-	y<-t(y)
-	y<-data.frame(y)
-	return(y)
+PredictDataset<-function(dataset, format="%m/%d/%Y %H:%M"){
+  result <- c()
+  lengthWithoutDate <-  length(dataset[,-which(colnames(dataset) == "DateTime")])
+  
+  dataSeries <- xts(dataset[,-which(colnames(dataset) == "DateTime")], order.by=as.Date(dataset[,"DateTime"], format))
+  
+  i<-1
+  for(i in i:lengthWithoutDate){
+    result[i] <- forecast(dataSeries[,i], h=1)$mean
+  }
+  
+  
+  names(result) <- colnames(dataset[ , colnames(dataset) != "DateTime"])
+  
+  print(result)
 }
 
 # predictionResult <- PredictDataset(dataset)
@@ -761,58 +755,64 @@ ChangeTimeDesc <- function(source, dataset, type = "0"){
   return (result)
 }
 
-DataInterval <- function(time1, time2, type="default"){
+DateInterval <- function(time1, time2){
   time1 <- strptime(time1, "%m/%d/%Y %H:%M")
   time2 <- strptime(time2, "%m/%d/%Y %H:%M")
   
   interval <- difftime(time1, time2)
   interval <- as.numeric(interval, units = "hours")
   
+  return(interval)
+}
+
+DataInterpreterInterval <- function (interval, type = "default"){
+  result<-""
+  
   if(type == "interval"){
     if(interval == 1){
-      interval <- "hourly"
+      result <- "hourly"
     }else if(interval == 24){
-      interval <- "daily"
+      result <- "daily"
     }else if(interval == 168){
-      interval <- "weekly"
+      result <- "weekly"
     }else if(interval == 720 || interval == 744){
-      interval <- "monthly"
+      result <- "monthly"
     }else if(interval == 8760 || interval == 8736){
-      interval <- "yearly"
+      result <- "yearly"
     }else{
-      interval <- ""
+      result <- ""
     }
   }else if(type == "intro"){
     if(interval == 1){
-      interval <- "This hour"
+      result <- "This hour"
     }else if(interval == 24){
-      interval <- "Today"
+      result <- "Today"
     }else if(interval == 168){
-      interval <- "This week"
+      result <- "This week"
     }else if(interval == 720 || interval == 744){
-      interval <- "This month"
+      result <- "This month"
     }else if(interval == 8760 || interval == 8736){
-      interval <- "This year"
+      result <- "This year"
     }else{
-      interval <- ""
+      result <- ""
     }
   }else{
     if(interval == 1){
-      interval <- "hour"
+      result <- "hour"
     }else if(interval == 24){
-      interval <- "day"
+      result <- "day"
     }else if(interval == 168){
-      interval <- "week"
+      result <- "week"
     }else if(interval == 720 || interval == 744){
-      interval <- "month"
+      result <- "month"
     }else if(interval == 8760 || interval == 8736){
-      interval <- "year"
+      result <- "year"
     }else{
-      interval <- ""
+      result <- ""
     }
   }
   
-  return(interval)
+  return(result)
 }
 
 #------------------------------------------------------------------------------------------------------------------
@@ -820,12 +820,13 @@ DataInterval <- function(time1, time2, type="default"){
 #------------------------------------------------------------------------------------------------------------------
 
 
-ReadIntro <- function(source="Data", type="General"){
+ReadIntro <- function(type="General"){
   type
   if(type == "Current" || 
      type == "Trend" || type == "Event" ||
-     type == "Predict"){
-    corpus <- as.matrix(read.table(file=paste0("Corpus/",type,"Intro.csv"), header=FALSE, sep=';'))
+     type == "Predict" || type == "PredictConj"  ||
+     type == "Temperature" || type == "AirQuality"  ){
+    corpus <- as.matrix(read.table(file=paste0("Corpus/",type,"Intro.csv"), header=FALSE, sep=';', quote=""))
     # print(corpus)
     n <- length(corpus)
     random_value <- as.integer(runif(1,1,n+0.5))
@@ -842,8 +843,6 @@ ReadResumeIntro <- function(dataset, ColName, source="data"){
   
   corpus <- as.matrix(read.table(file=paste0("Corpus/","ResumeIntro.csv"), header=FALSE, sep=';'))
 
-  
-   
   #Randoming corpus
   n <- length(corpus)
   random_value <- as.integer(runif(1,1,n))
@@ -851,6 +850,10 @@ ReadResumeIntro <- function(dataset, ColName, source="data"){
 
   #Replaceing Data Source
   result <- gsub("@source", source, result)
+  
+  #Replaceing Data Source
+  interval <- DataInterpreterInterval(datasetIntervalValue, type = "interval")
+  result <- gsub("@interval", interval, result)
 
   #Replacing Data Range
   date1 <- dataset[1, ]
@@ -883,7 +886,7 @@ ReadResumeIntro <- function(dataset, ColName, source="data"){
   return (result)
 }
 
-ReadCurrentIntro <- function(dateTime, interval){
+ReadCurrentIntro <- function(dateTime){
   corpus <- as.matrix(read.table(file=paste0("Corpus/CurrentIntro.csv"), header=FALSE , sep = ';'))
   
   n <- length(corpus)
@@ -891,7 +894,9 @@ ReadCurrentIntro <- function(dateTime, interval){
   
   result <- corpus[random_value]
   
+  interval <- DataInterpreterInterval(datasetIntervalValue, "intro")
   result <- gsub("@date", interval, result)
+  
   result <- gsub("@time", dateTime, result)
   
   return(result)
@@ -1098,13 +1103,6 @@ ResumeTrend <- function(statisticalResume){
   
   return(result)
     
-}
-ResumeIntroSentence <- function(){
-
-}
-
-ResumeEvent <- function(){
-
 }
 
 #Repeated Value analysis
@@ -1408,11 +1406,17 @@ LexicalDateRange  <- function(dateStart, dateEnd){
 CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
   result <- ""
   
+  #error handling
   if(length(vectorTrendDesc) != 0){
     mainSentence<-""
     
+    #marking if the index has been grouped
+    #example: 1 2 0 4 5 0 0
+    # 0 represent that index still not been checked
     i<-1
     reps<- rep(0, length(vectorTrendDesc))
+    
+    #first itter
     while(i <= length(vectorTrendDesc) && length(reps[reps == 0]) != 0 ){
       
       subSentence <- ""
@@ -1422,13 +1426,17 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
         colName <- interpreterResult$Colname[i]
         
         subSentence <- paste0(colName)
+        
+        #handling if not the last value
         if(i != length(vectorTrendDesc)){
           j <- i + 1
+          
+          #second itter
           while(j <= length(vectorTrendDesc)){
             if(length(reps[reps == 0]) != 0){
               if(interpreterResult$InterpreterResult[i] == interpreterResult$InterpreterResult[j] && vectorTrendDesc[i] == vectorTrendDesc[j]){
+                #mark the index as checked
                 reps[j] <- j
-                
                 
                 colName <- interpreterResult$Colname[j]
                 
@@ -1437,7 +1445,7 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
                 isGroupingAvailable <- (interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i]
                 isGroupingAvailable <- table(isGroupingAvailable)
                 
-                
+                #handling if table dont have FALSE or TRUE value, then use default value (0)
                 if(!is.na(isGroupingAvailable["FALSE"]) && !is.na(isGroupingAvailable["TRUE"])){
                   indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
                   indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
@@ -1460,11 +1468,12 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
               }
               j <- j + 1
             }else{
-              
               break
             }
           }
         }
+        
+        #after groping the column
         interpreter <- interpreterResult$InterpreterResult[i]
         phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
         
@@ -1481,21 +1490,99 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
   return(mainSentence)
 }
 
-CurrentAglast <- function(){
-
+ReadPredictIntro <-function (intro) {
+  conj <- ReadIntro(type="PredictConj")
+  
+  intro <- gsub("@conj",conj, intro)
+  
+  return(intro)
 }
-CurrentAgresume <- function(){
 
-}
-
-PredictIntro <- function(){
-
-}
-PredictContent <- function(){
-
-}
-PredictConc <- function(){
-
+PredictContent <- function(interpreterResult, vectorTrendDesc, dataset){
+  result <- ""
+  
+  #error handling
+  if(length(vectorTrendDesc) != 0){
+    mainSentence<-""
+    
+    #marking if the index has been grouped
+    #example: 1 2 0 4 5 0 0
+    # 0 represent that index still not been checked
+    i<-1
+    reps<- rep(0, length(vectorTrendDesc))
+    
+    #first itter
+    while(i <= length(vectorTrendDesc) && length(reps[reps == 0]) != 0 ){
+      
+      subSentence <- ""
+      if(reps[i] == 0){
+        reps[i] <- i
+        
+        colName <- interpreterResult$Colname[i]
+        
+        subSentence <- paste0(colName)
+        
+        #handling if not the last value
+        if(i != length(vectorTrendDesc)){
+          j <- i + 1
+          
+          #second itter
+          while(j <= length(vectorTrendDesc)){
+            if(length(reps[reps == 0]) != 0){
+              if(interpreterResult$InterpreterResult[i] == interpreterResult$InterpreterResult[j] && vectorTrendDesc[i] == vectorTrendDesc[j]){
+                #mark the index as checked
+                reps[j] <- j
+                
+                colName <- interpreterResult$Colname[j]
+                
+                #isGroupingAvailable: Vector, TRUE OR FALSE
+                indicator <- c("TRUE"=0, "FALSE"=0)
+                isGroupingAvailable <- (interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i]
+                isGroupingAvailable <- table(isGroupingAvailable)
+                
+                #handling if table dont have FALSE or TRUE value, then use default value (0)
+                if(!is.na(isGroupingAvailable["FALSE"]) && !is.na(isGroupingAvailable["TRUE"])){
+                  indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
+                  indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
+                }else if(!is.na(isGroupingAvailable["TRUE"])){
+                  indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
+                }else if(!is.na(isGroupingAvailable["FALSE"])){
+                  indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
+                }
+                
+                print((interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i])
+                print(indicator)
+                #if there's nothing to grouping, then put "and" on the end of grouping
+                if(as.numeric(indicator["TRUE"]) > 1){
+                  subSentence <- paste0(subSentence,", ", colName)
+                }else{
+                  subSentence <- paste0(subSentence,", and ", colName)
+                }
+                
+                
+              }
+              j <- j + 1
+            }else{
+              break
+            }
+          }
+        }
+        
+        #after groping the column
+        interpreter <- interpreterResult$InterpreterResult[i]
+        phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
+        
+        subSentence <- paste(subSentence, phrase, interpreter)
+        mainSentence <- paste0(mainSentence, subSentence,". ")
+      }
+      cat("reps:", i, " ",reps,"\n")
+      
+      i <- i + 1
+    }
+    
+  }#end if repValue
+  
+  return(mainSentence)
 }
 
 TrendAnalysis <- function(start,dataset){
@@ -1715,3 +1802,134 @@ KMP <- function(string, pattern){
 
 
 KMP(c(1,2,3,5,2,4,2,1,3,4,4,2,1), c(3,5,2,4,2))
+
+MissingValueHandling <- function(dataset){
+  md.pattern(dataset)
+  
+  #using linear regression
+  model <- mice(dataset,maxit=50,seed=500, meth="norm")
+  result <- complete(model)  # generate the completed data.
+  
+  return(result)
+}
+
+IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
+  case1 <- c("Rainfall","CloudCoverage")
+  case2 <- c("Temperature")
+  case3 <- c("CO","NO","NO2","NOX","O3","PM10","PM25","SO2")
+  
+  boolcase1 <- case1 %in% colName
+  boolcase2 <- case2 %in% colName
+  boolcase3 <- case3 %in% colName
+  
+  result <- NULL
+  vectorResult <- NULL
+  #CASE 1: (SKY STATE SENTENCE, RAINFALL & CLOUD COVERAGE)
+  if(sum(boolcase1 == "FALSE") == 0){
+    #get the rainstate from list
+    rainState <- lapply(interpreterPredict,`[[`, which(interpreterPredict$Colname == "Rainfall"))$InterpreterResult
+    cloudState <- lapply(interpreterPredict,`[[`, which(interpreterPredict$Colname == "CloudCoverage"))$InterpreterResult
+    
+    skyState <- skyStateAgg(rainState, cloudState)
+    skyIntro <- ReadIntro(type="Predict")
+    skyIntro <- gsub("@conj", "tomorrow sky will be", skyIntro)
+    skySentence <- paste(skyIntro, skyState)
+    
+    result <- paste(skySentence)
+    vectorResult <- case1
+  #CASE 2: (TEMPERATURE SENTENCE)
+  }else if(sum(boolcase2 == "FALSE") != 0){
+    #get all value when list$colname value == temperature
+    temperatureState <- lapply(interpreterPredict,`[[`, which(interpreterPredict$Colname == "Temperature"))$InterpreterResult
+    
+    temperatureIntro <- ReadIntro(type = "Temperature")
+    temperatureTrendDesc<- TrendDescTemperature()
+    temperatureSentence <- paste(temperatureIntro, temperatureTrendDesc, temperatureState)
+    
+    result <- paste(result, temperatureSentence)
+    vectorResult <- c(vectorResult, case2)
+  #CASE3: (AIR QUALITY SENTENCE)  
+  }else if(sum(boolcase3 == "FALSE") != 0){
+    AQdataLast <- datas[-1,case3]
+    AQdatanow <- datas[nrow(datas),case3]
+    AQdataPredict <- PredictDataset(datas, "%d/%m/%Y")
+    
+    AQvalLast <- AirQualityCalculation(AQdataLast)
+    AQvalnow <- AirQualityCalculation(AQdatanow)
+    AQvalPredict <- AirQualityCalculation(AQdataPredict)
+    
+    AQInterpreterLast <- DataInterpreterAdjective(AQvalLast, type="AirQuality")$InterpreterIndex
+    AQInterpreterNow <- DataInterpreterAdjective(AQvalnow, type="AirQuality")$InterpreterIndex
+    AQInterpreterPredict <- DataInterpreterAdjective(AQvalPredict, type="AirQuality")$InterpreterIndex
+    
+    AQsequence <- LD_Compare(c(AQvalLast, AQvalnow, AQvalPredict))
+  
+    AQintro <- ReadIntro(type="AirQuality")
+    AQtrendDesc <- change_word_bank_AQ(AQsequence)
+    AQstate<- DataInterpreterAdjective(AQvalPredict, type="AirQuality")$InterpreterResult
+    
+    AQsentence <- paste(AQintro, AQtrendDesc, AQstate)
+    
+    result <- paste(result, AQsentence)
+    vectorResult <- c(vectorResult, case3)
+  }
+  
+  
+  return(list(Sentence = result, VectorResult = vectorResult))
+}
+
+#Function Sky State Aggregation with Simple Conjunction
+skyStateAgg <- function (rain,cloud){
+  #Assign Rule for Contrast Value for each partition of rain state
+  if(rain=="no rain"||rain=="light rain"){
+    Contrast1=0
+  }
+  else if(rain=="moderate rain"||rain=="heavy rain" ||
+          rain=="intense rain" || rain=="torential rain"){
+    Contrast1=1
+  }
+  #Assign Rule for Contrast Value for each partition of cloud state
+  if(cloud=="clear"||cloud=="foggy"||cloud=="mostly sunny"){
+    Contrast2=0
+  }
+  else if(cloud=="partly cloudy"||cloud=="mostly cloudy"||cloud=="broken"
+          || cloud=="overcast"){
+    Contrast2=1
+  }
+  
+  if(Contrast1==Contrast2){
+    
+    Conjunction<-"covered with"
+  }else{
+    
+    Conjunction<- "although its covered by"
+    
+  }
+  
+  result <- paste(rain,Conjunction,cloud,"sky.")
+  return(result)
+}
+
+TrendDescTemperature <- function(){
+  var2 <- datasetNow[,"Temperature"]
+  var1 <- datasetPredicted["Temperature"]
+  
+  if(var2>var1){
+    return("increased to")
+  }
+  else if(var2<var1){
+    return("decreased to")
+  }
+  else{
+    x<-as.integer(runif(1,1,4))
+    if(x==1){
+      return("keep stable at")
+    }
+    if(x==2){
+      return("stay stable at")
+    }
+    if(x==3){
+      return("constant at")
+    }
+  }
+}
