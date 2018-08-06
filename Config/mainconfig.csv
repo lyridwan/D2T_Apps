@@ -1,0 +1,7 @@
+ColName,Type,Rule,Alternate
+AirQuality,numeric,range,Air Quality
+WindSpeed,numeric,range,Wind Speed
+WindDirection,numeric,range,Wind Direction
+CloudCoverage,numeric,range,Cloud Coverage
+Temperature,numeric,fuzzy,NA
+Rainfall,numeric,fuzzy,NA

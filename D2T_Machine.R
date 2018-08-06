@@ -25,7 +25,8 @@ library(xts)
 #5. plotrix
 #install.packages("plotrix")
 library(greybox)
-
+library(data.table)
+library(rjson)
 #5. ade4
 #install.packages("ade4")
 # library(ade4)
@@ -54,7 +55,6 @@ library(greybox)
 #---------------------- Prediction with ETS and Gradient Descent
 #Climate data prediction : Cloud Coverage,Average Temperature,Wind Speed,Wind Direction,Rainfall
 #drop date
-
 ClassHeaderChecker <- function(dataset){
   #dataset: vector
   
@@ -71,9 +71,35 @@ ClassHeaderChecker <- function(dataset){
   # $numeric
   # [1] "WindSpeed"   "Tax"         "Probability"
   #
-  result <- split(names(dataset),sapply(dataset, function(x) paste(class(x), collapse=" ")))
+  result <- sapply(dataset, function(x) paste(class(x), collapse=" "))
   
   return(result)
+}
+
+
+ReadConfig <- function (){
+  nullSequence <- rep(NA, length(columnName))
+  dfResult <- data.frame(ColName = columnName, Type = nullSequence, Rule = nullSequence, Alternate=nullSequence, stringsAsFactors=FALSE)
+  
+  headerClass <- ClassHeaderChecker(dataset)
+  headerClass <- headerClass[names(headerClass)!="DateTime"]
+  i<-1
+  for(i in i:length(headerClass)){
+    tempColumn <- names(headerClass)[i]
+    dfResult[dfResult$ColName == tempColumn,"Type"] <- headerClass[names(headerClass) == tempColumn]
+  }
+  
+  
+  mainConfig <- read.table("Config/mainconfig.csv", header=TRUE, sep=",")
+  
+  #Merging Process with setting from file
+  i<-1
+  for(i in i:nrow(mainConfig)){
+    tempColumn <- as.character(unlist(mainConfig$ColName[i]))
+    dfResult[dfResult$ColName == tempColumn,] <- as.vector(unlist(mainConfig[mainConfig$ColName == tempColumn,]))
+  }
+  
+  return(dfResult)
 }
 
 PredictDataset<-function(dataset, format="%m/%d/%Y %H:%M"){
@@ -629,6 +655,7 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume=NUL
      type == "Temperature" || 
      type == "Rainfall"){
     corpus <- read.table(file=paste0("Corpus/",type,"Adjective.csv"), sep=",", header=TRUE)
+    
     if(type == "Temperature" || type == "Rainfall"){
       result <- MembershipFuzzy(value, corpus);
     }else{
@@ -796,7 +823,7 @@ DataInterpreterInterval <- function (interval, type = "default"){
       result <- "daily"
     }else if(interval == 168){
       result <- "weekly"
-    }else if(interval == 720 || interval == 744){
+    }else if(interval == 672 || interval == 696 || interval == 720 || interval == 744){
       result <- "monthly"
     }else if(interval == 8760 || interval == 8736){
       result <- "yearly"

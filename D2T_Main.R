@@ -5,19 +5,19 @@ source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
-# dataset <- read.table(file="Datasets/exc_2001.csv", sep=",", header=FALSE)
 dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
+dataset <- as.data.frame(fread(file="Datasets/exc_2001.csv"))
 colnames(dataset)[1] <- "DateTime"
 
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
-# airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
-datasetIntervalValue <- DateInterval(dataset[2,"DateTime"], dataset[1,"DateTime"])
 
-#PRA PROCESSING HEADER
-dataset <- IsHeaderAvailable(dataset)
+mainConfig <- ReadConfig()
 
 #  
 columnName <- colnames(datasetWithoutDate)
+
+# airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
+datasetIntervalValue <- DateInterval(dataset[2,"DateTime"], dataset[1,"DateTime"])
 
 # Predict
 datasetPredicted <- PredictDataset(dataset)
