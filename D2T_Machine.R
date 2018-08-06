@@ -24,7 +24,7 @@ library(xts)
 
 #5. plotrix
 #install.packages("plotrix")
-#library(plotrix)
+library(greybox)
 
 #5. ade4
 #install.packages("ade4")
@@ -54,6 +54,27 @@ library(xts)
 #---------------------- Prediction with ETS and Gradient Descent
 #Climate data prediction : Cloud Coverage,Average Temperature,Wind Speed,Wind Direction,Rainfall
 #drop date
+
+ClassHeaderChecker <- function(dataset){
+  #dataset: vector
+  
+  # result: list of vector
+  # example:
+  #
+  # $factor
+  # [1] "DateTime"
+  # 
+  # $integer
+  # [1] "CloudCoverage" "Temperature"   "WindDirection" "Rainfall"      "Price"         "Stock"         "Location"     
+  # [8] "Sold"          "Sale"         
+  # 
+  # $numeric
+  # [1] "WindSpeed"   "Tax"         "Probability"
+  #
+  result <- split(names(dataset),sapply(dataset, function(x) paste(class(x), collapse=" ")))
+  
+  return(result)
+}
 
 PredictDataset<-function(dataset, format="%m/%d/%Y %H:%M"){
   result <- c()
@@ -465,7 +486,7 @@ GeneralFuzzyGenerator <-function(type, statisticalResume){
   
   listGeneralPartition <- list()
   if(minRange == maxRange){
-    result <- "Constant"
+    return(NULL)
   }else{
     n = nrow(corpus)
     node = (2*n)+n-1
@@ -646,7 +667,7 @@ DataInterpreter <- function(dataset,statisticalResume){
   listResult <- list(Colname = vectorColName, InterpreterResult = vectorIntResult, InterpreterIndex = vectorIntIndex)
   #print(vectorIntResult)
   print(listResult)
-  #return(listResult)
+  return(listResult)
 }
 
 
@@ -1475,7 +1496,12 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
         
         #after groping the column
         interpreter <- interpreterResult$InterpreterResult[i]
-        phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
+        if(interpreter == "Constant"){
+          phrase <- change_word_bank_AQ2()
+          interpreter = "from the first time"
+        }else{
+          phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
+        }
         
         subSentence <- paste(subSentence, phrase, interpreter)
         mainSentence <- paste0(mainSentence, subSentence,". ")
@@ -1678,6 +1704,16 @@ change_word_bank_AQ <- function (fragmentCode){
   }
 }
 
+change_word_bank_AQ2 <- function (){
+  phrase <- as.matrix(read.table("Corpus/AQ_phrase_bank2.csv", header=FALSE, sep=';', quote=""))
+  # print(corpus)
+  n <- length(phrase)
+  random_value <- as.integer(runif(1,1,n+0.5))
+  
+  result <- phrase[random_value]
+  return (result)
+}
+
 DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){
   if(length(dfGrowth) != 0){
     result <- c()
@@ -1838,7 +1874,7 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
     result <- paste(skySentence)
     vectorResult <- case1
   #CASE 2: (TEMPERATURE SENTENCE)
-  }else if(sum(boolcase2 == "FALSE") != 0){
+  }else if(sum(boolcase2 == "FALSE") == 0){
     #get all value when list$colname value == temperature
     temperatureState <- lapply(interpreterPredict,`[[`, which(interpreterPredict$Colname == "Temperature"))$InterpreterResult
     
@@ -1849,7 +1885,7 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
     result <- paste(result, temperatureSentence)
     vectorResult <- c(vectorResult, case2)
   #CASE3: (AIR QUALITY SENTENCE)  
-  }else if(sum(boolcase3 == "FALSE") != 0){
+  }else if(sum(boolcase3 == "FALSE") == 0){
     AQdataLast <- datas[-1,case3]
     AQdatanow <- datas[nrow(datas),case3]
     AQdataPredict <- PredictDataset(datas, "%d/%m/%Y")
@@ -1874,8 +1910,9 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
     vectorResult <- c(vectorResult, case3)
   }
   
-  
-  return(list(Sentence = result, VectorResult = vectorResult))
+  print(result)
+  print(vectorResult)
+  #return(list(Sentence = result, VectorResult = vectorResult))
 }
 
 #Function Sky State Aggregation with Simple Conjunction
