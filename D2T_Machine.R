@@ -26,7 +26,6 @@ library(xts)
 #install.packages("plotrix")
 library(greybox)
 library(data.table)
-library(rjson)
 #5. ade4
 #install.packages("ade4")
 # library(ade4)
@@ -81,15 +80,6 @@ ReadConfig <- function (){
   nullSequence <- rep(NA, length(columnName))
   dfResult <- data.frame(ColName = columnName, Type = nullSequence, Rule = nullSequence, Alternate=nullSequence, stringsAsFactors=FALSE)
   
-  headerClass <- ClassHeaderChecker(dataset)
-  headerClass <- headerClass[names(headerClass)!="DateTime"]
-  i<-1
-  for(i in i:length(headerClass)){
-    tempColumn <- names(headerClass)[i]
-    dfResult[dfResult$ColName == tempColumn,"Type"] <- headerClass[names(headerClass) == tempColumn]
-  }
-  
-  
   mainConfig <- read.table("Config/mainconfig.csv", header=TRUE, sep=",")
   
   #Merging Process with setting from file
@@ -97,6 +87,17 @@ ReadConfig <- function (){
   for(i in i:nrow(mainConfig)){
     tempColumn <- as.character(unlist(mainConfig$ColName[i]))
     dfResult[dfResult$ColName == tempColumn,] <- as.vector(unlist(mainConfig[mainConfig$ColName == tempColumn,]))
+  }
+  
+  headerClass <- ClassHeaderChecker(dataset)
+  headerClass <- headerClass[names(headerClass)!="DateTime"]
+  i<-1
+  for(i in i:length(headerClass)){
+    tempColumn <- names(headerClass)[i]
+    
+    if(is.na(dfResult[dfResult$ColName == tempColumn,"Type"])){
+      dfResult[dfResult$ColName == tempColumn,"Type"] <- headerClass[names(headerClass) == tempColumn]
+    }
   }
   
   return(dfResult)
@@ -648,15 +649,10 @@ PlottingTrendFuzzy <- function(variables, name="Undefined"){
 --Output: Good
 "
 DataInterpreterAdjective <- function(value, type="General",statisticalResume=NULL){
-  if(type == "AirQuality" || 
-     type == "WindSpeed" || 
-     type == "WindDirection" || 
-     type == "CloudCoverage" ||
-     type == "Temperature" || 
-     type == "Rainfall"){
+  if(!is.na(mainConfig[mainConfig$ColName == type,]$Rule)){
     corpus <- read.table(file=paste0("Corpus/",type,"Adjective.csv"), sep=",", header=TRUE)
     
-    if(type == "Temperature" || type == "Rainfall"){
+    if(mainConfig[mainConfig$ColName == type,]$Rule == "fuzzy"){
       result <- MembershipFuzzy(value, corpus);
     }else{
       result <- MembershipClassifier(value, corpus);
@@ -1796,7 +1792,7 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
     i<-1
     for(i in i:length(vectorDecay)){
       if(i == length(vectorDecay)){
-        sentence2 <- paste0(sentence2, " and ", vectorDecay[i], ".")
+        sentence2 <- paste0(sentence2, "and ", vectorDecay[i], ".")
       }else{
         sentence2 <- paste0(sentence2, vectorDecay[i], ", ")
       }
@@ -1996,4 +1992,16 @@ TrendDescTemperature <- function(){
       return("constant at")
     }
   }
+}
+
+
+PostProcessing <- function(corpus){
+  result <- mainConfig[!is.na(mainConfig$Alternate),]
+  
+  i<-1
+  for(i in i:nrow(result)){
+    corpus <- gsub(as.character(result$ColName[i]), as.character(result$Alternate[i]), corpus)
+  }
+  
+  return(corpus)
 }

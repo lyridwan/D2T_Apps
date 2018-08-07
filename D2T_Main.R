@@ -1,20 +1,22 @@
-#setwd("~/GitHub/D2T_Apps")
-setwd("~/Programming/GitHub/D2T_Apps")
+# setwd("~/Programming/GitHub/D2T_Apps")
+setwd("~/GitHub/D2T_Apps")
 # INITIALIZING
 source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
-dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
 dataset <- as.data.frame(fread(file="Datasets/exc_2001.csv"))
+dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
 colnames(dataset)[1] <- "DateTime"
 
+#
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 
-mainConfig <- ReadConfig()
-
-#  
+#
 columnName <- colnames(datasetWithoutDate)
+
+#   
+mainConfig <- ReadConfig()
 
 # airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
 datasetIntervalValue <- DateInterval(dataset[2,"DateTime"], dataset[1,"DateTime"])
@@ -86,10 +88,13 @@ vectorEndIndex <- vectorEndIndex + 1
 
 #Combine all process into df
 dfHighestGrowth <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
+dfHighestGrowth$type <- mainConfig$Type
 highestInterpreterIndex <- max(vectorInterpreterIndex)
 
-dfHighestGrowth <- dfHighestGrowth[dfHighestGrowth$vectorInterpreterIndex == 5,]
+dfHighestGrowth <- dfHighestGrowth[dfHighestGrowth$vectorInterpreterIndex == 5 ,]
+dfHighestGrowth <- dfHighestGrowth[dfHighestGrowth$type == "numeric" ,]
 dfHighestGrowth$colName <- columnName[as.numeric(rownames(dfHighestGrowth))]
+
 
 vectorSentenceHighestGrowth <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfHighestGrowth, type = "Growth")
 
@@ -113,9 +118,11 @@ vectorEndIndex <- vectorEndIndex + 1
 
 #Combine all process into df
 dfHighestDecay <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
+dfHighestDecay$type <- mainConfig$Type
 highestInterpreterIndex <- min(vectorInterpreterIndex)
 
 dfHighestDecay <- dfHighestDecay[dfHighestDecay$vectorInterpreterIndex == 1,]
+dfHighestDecay <- dfHighestDecay[dfHighestDecay$type == "numeric" ,]
 dfHighestDecay$colName <- columnName[as.numeric(rownames(dfHighestDecay))]
 
 vectorSentenceHighestDecay <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfHighestDecay, type = "Decay")
@@ -236,7 +243,9 @@ predictResult <- paste(predictIntro, predictContent)
 
 
 
-
+resumeResult <- PostProcessing(resumeResult)
+currentResult <- PostProcessing(currentResult)
+predictResult <- PostProcessing(predictResult)
 
 # currentResult <- paste(currentIntro, currentDesc, currentAglast, currentAgresume)
 # currentResult <- paste(currentIntro, currentDesc)

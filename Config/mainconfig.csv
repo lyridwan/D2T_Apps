@@ -5,3 +5,12 @@ WindDirection,numeric,range,Wind Direction
 CloudCoverage,numeric,range,Cloud Coverage
 Temperature,numeric,fuzzy,NA
 Rainfall,numeric,fuzzy,NA
+USD,integer,NA,U.S. Dollar
+JPY,NA,NA,Japan Yen
+GBP,NA,NA,Great British Pounds
+CHF,NA,NA,Confoederatio Helvetica Franc
+SGD,NA,NA,Singapore Dollar
+MYR,NA,NA,Malaysian Ringgit
+HKD,NA,NA,Hong Kong dollar
+AUD,NA,NA,Australian Dollar
+CAD,NA,NA,Canadian Dollar
