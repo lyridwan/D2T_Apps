@@ -1,22 +1,4 @@
-> vectorGrowth
-[1] 3.0330 4.3530 3.8430 2.5500 1.6080 1.7140 1.3619 2.0930 4.0510
-> vectorStartIndex
-[1]  	79  80 	137	137 80 	101 177 74  12
-> vectorEndIndex
-[1]  	82  82 	140	140 82 	104 178 76 	16
-> vectorInterpreterIndex
-[1] 	4 	5 	4 	4 	4 	5 	5 	4 	5
-
-
-> vectorInterpreterIndex
-[1] 2 2 2 2 3 1 1 2 2
-> vectorStartIndex
-[1]  86 129 165 165  86 100 179  77  17
-> 
-> vectorEndIndex
-[1]  90 136 169 166  90 100 187  81  18
-> vectorGrowth
-[1] -2.06000 -2.65900 -3.64550 -1.66092 -0.89400 -1.64500 -1.33185 -1.57000 -3.65800
-
-
-JPY increased greatly (4.3530 point) from 1st Aug to 1st Oct 2008, MYR increased significantly (1.7140 point) from 1st May to 1st Aug 2010, HKD increased highly (1.3619 point) from 1st Sep to 1st Oct 2016, and CAD increased highly (4.0510 point) from 1st Dec 2001 to 1st Apr 2002. While MYR decreased greatly (-1.64500) on  1st April 2010 , and HKD decreased significantly (-1.33185 point) from 1st Oct 2016 to 1st Aug 2017
+--stuck di bug repeated value
+--nanti di rumah kerjain KMP
+--KMP udah sampe detect, tinggal bikin corpus
+--KMP hanya untuk integer/categorical
