@@ -6,7 +6,7 @@ source("D2T_Machine.R", local = TRUE)
 
 # READ DATA
 dataset <- as.data.frame(fread(file="Datasets/exc_2001.csv"))
-dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
+dataset <- as.data.frame(fread(file="Datasets/experiment.csv"))
 colnames(dataset)[1] <- "DateTime"
 
 #
@@ -147,30 +147,10 @@ for(i in i:length(datasetWithoutDate)){
   nowIndex <- interpreterNow$InterpreterIndex[i]
   
   vectorSequenceIndex <- c(last2Index, lastIndex, nowIndex)
-  print(vectorSequenceIndex)
+  # print(vectorSequenceIndex)
   vectorTrendDescriptionAnalysis[i] <- LD_Compare(vectorSequenceIndex)
 }
 
-# i=1;
-# # Today
-# for (i in i:length(columnName)) {
-#   cat(" Today", columnName[i], " :", as.character(unlist(interpreterNow[i])), "\n\n")
-# }
-
-# i=1;
-# # Last
-# for (i in i:length(columnName)) {
-#   cat(" Last", columnName[i], " :", as.character(unlist(interpreterLast[i])), "\n\n")
-# }
-
-# i=1;
-# # Resume
-# for (i in i:length(columnName)) {
-#   cat(" Resume", columnName[i], " :", as.character(unlist(interpreterResume[i])), "\n\n")
-# }
-
-#eventIntro <- ReadIntro(type="Event")
-#resumeEvent <- paste(eventIntro,"6 value from Xth to Yth")
 
 i <- 1
 maxValue <- 0
@@ -190,7 +170,7 @@ if(maxValue != 0){
   for(i in i:length(listRepeatedAnalysisResult[[maxIndex]]$Start)){
     selectedIndex <-listRepeatedAnalysisResult[[maxIndex]]$Start[i]
     selectedValue <- datasetWithoutDate[[selectedColumn]][selectedIndex]
-    print(selectedValue)
+    # print(selectedValue)
     
     vectorRepeatedInterpretResult[[i]] <- DataInterpreterAdjective(selectedValue, selectedColumn, statisticalResume)$InterpreterResult
   }
@@ -209,8 +189,13 @@ if(maxValue != 0){
 }
 
 
+# MotifDiscoveryAnalys
+# 
+# resumeMotifDisc <- 
+
+
 resumeHighestGrowth <- AggResumeGrowth(vectorSentenceHighestGrowth, vectorSentenceHighestDecay)
-resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGrowth)
+resumeResult <- paste0(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGrowth)
 
 
 # 
@@ -227,16 +212,20 @@ for(i in i:length(datasetWithoutDate)){
   nowIndex <- interpreterNow$InterpreterIndex[i]
   predictIndex <- interpreterPredict$InterpreterIndex[i]
   vectorSequenceIndex <- c(lastIndex, nowIndex, predictIndex)
-  print(vectorSequenceIndex)
+  # print(vectorSequenceIndex)
   vectorTrendDescriptionPredict[i] <- LD_Compare(vectorSequenceIndex)
 }
 
 # currentAglast <- TrendAnalysis(length(dataset)-5, dataset[[2]])
 # currentAgresume <- "and now is the higest from overall."
-# 
-specialCorpus <- IsSpecialCorpusAvailable(interpreterPredict, columnName)
+#
+
 predictIntro <- ReadPredictIntro(ReadIntro(type="Predict"))
 
+specialCorpus <- IsSpecialCorpusAvailable(interpreterPredict, columnName)
+if(!is.null(specialCorpus$Sentence)){
+  predictIntro <- paste(predictIntro, specialCorpus$Sentence)
+}
 
 predictContent <- CurrentDesc(interpreterPredict,vectorTrendDescriptionAnalysis,datasetWithoutDate)
 predictResult <- paste(predictIntro, predictContent)
@@ -247,12 +236,6 @@ resumeResult <- PostProcessing(resumeResult)
 currentResult <- PostProcessing(currentResult)
 predictResult <- PostProcessing(predictResult)
 
-# currentResult <- paste(currentIntro, currentDesc, currentAglast, currentAgresume)
-# currentResult <- paste(currentIntro, currentDesc)
-
-# predictResult <- paste(predictIntro, predictContent, predictConc)
-
-# source("D2T_Machine.R", local = TRUE)
 resumeResult
 currentResult
 predictResult

@@ -117,7 +117,8 @@ PredictDataset<-function(dataset, format="%m/%d/%Y %H:%M"){
   
   names(result) <- colnames(dataset[ , colnames(dataset) != "DateTime"])
   
-  print(result)
+  # print(result)
+  return(result)
 }
 
 # predictionResult <- PredictDataset(dataset)
@@ -158,34 +159,6 @@ StatisticalAnalysis <- function(dataset){
   datasetStatistical <- data.frame(ColName, MaxDate, MaxValue, MaxIndex, MinDate, MinValue, MinIndex, SumValue, Average);
   return(datasetStatistical) 
 }
-
-# cat("------------        N-1 Dataset       -----------\n\n")
-# datasetYesterday <- dataset[nrow(dataset)-1, !colnames(dataset)== "DateTime"]
-# cat("------------        Last Dataset       -----------\n\n")
-# datasetToday <- dataset[nrow(dataset), !colnames(dataset)== "DateTime"]
-# cat("------------        LAST 2 MONTH AVERAGE       -----------\n\n")
-# averageLast2Month <- as.data.frame.list(colMeans(dataset[(NROW(dataset)-60):(NROW(dataset)-30) , colnames(dataset) != "DateTime"]))
-# print(averageLast2Month);
-# cat("------------        LAST MONTH AVERAGE       -----------\n\n")
-# averageLastMonth <- as.data.frame.list(colMeans(dataset[(NROW(dataset)-30):NROW(dataset) , colnames(dataset) != "DateTime"]))
-# print(averageLastMonth);
-# cat("------------        YEAR AVERAGE       -----------\n\n")
-# averageYear <- as.data.frame.list(colMeans(dataset[, colnames(dataset) != "DateTime"]))
-# print(averageYear);
-# cat("------------        LAST 2 MONTH SUMMARY       -----------\n\n")
-# statisticalLast2Month <- StatisticalAnalysis(dataset[(NROW(dataset)-60):(NROW(dataset)-30) , ])
-# print(statisticalLast2Month);
-# cat("------------        LAST MONTH SUMMARY       -----------\n\n")
-# statisticalLastMonth <- StatisticalAnalysis(dataset[(NROW(dataset)-30):NROW(dataset) , ])
-# print(statisticalLastMonth);
-# cat("------------        YEAR SUMMARY       -----------\n\n")
-# statisticalYear <- StatisticalAnalysis(dataset)
-# print(statisticalYear);
-
-#rm(datasetWithoutDate)
-# datasetMin <- data.frame(datasetColName, datasetMinDate, datasetMinValue);
-# datasetSum <- data.frame(datasetColName, datasetSumValue);
-# datasetAverage <- data.frame(colMeans(dataset[2:6]));
 
 AirQualityCalculation <- function (dataset){
   #menghitung sub-index value dari variabel PM25
@@ -275,27 +248,27 @@ AirQualityCalculation <- function (dataset){
   CO<-as.double(dataset["CO"])
   if((CO>=0)&&(CO<=5)){
     b2<-5; b1<-0; a2<-50; a1<-0;
-    print("xx11")
+    # print("xx11")
   }
   else if((CO>5)&&(CO<=10)){
     b2<-10; b1<-5.1; a2<-100; a1<-51
-    print("xx12")
+    # print("xx12")
   }
   else if((CO>10)&&(CO<=17)){
     b2<-17; b1<-10; a2<-200; a1<-101
-    print("xx13")
+    # print("xx13")
   }
   else if((CO>17)&&(CO<=34)){
     b2<-34; b1<-17.1; a2<-300; a1<-201
-    print("xx14")
+    # print("xx14")
   }
   else if((CO>34)&&(CO<=46)){
     b2<-46; b1<-34.1; a2<-400; a1<-301
-    print("xx15")
+    # print("xx15")
   }
   else if((CO>46)&&(CO<=57.5)){
     b2<-57.5; b1<-46.1; a2<-500; a1<-401
-    print("xx16")
+    # print("xx16")
   }
   else{
     b2<-57.5; b1<-46.1; a2<-500; a1<-401
@@ -396,7 +369,7 @@ MembershipFuzzy <- function(value, corpus){
 }
 
 TrendFuzzyGenerator <-function(type, statisticalResume){
-  corpus <- read.table(file=paste0("Corpus/TrendFuzzyAdjective.csv"), sep=",", header=TRUE)
+  corpus <- read.table(file=paste0("Corpus/Fuzzy/TrendFuzzyAdjective.csv"), sep=",", header=TRUE)
   maxRange <- as.character(statisticalResume[statisticalResume$ColName == type, "MaxValue"])
   minRange <- as.character(statisticalResume[statisticalResume$ColName == type, "MinValue"])
   
@@ -422,7 +395,7 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
     minRange <- as.double(maxRange)/2*-1
     maxRange <- as.double(maxRange)/2
     
-    cat(">>>> max min", maxRange, minRange)
+    # cat(">>>> max min", maxRange, minRange)
     rangenode = (maxRange-minRange)/node
     
     i=1
@@ -446,7 +419,7 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
         # print(v3)
         # print(v4)
         
-        cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
+        # cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
         listGeneralPartition[[i]] <- c(v1,v2,v3,v4)
         #listGeneralPartition[[corpus$Category[i]]] <- c(v1,v2,v3,v4)
       }else{
@@ -455,7 +428,7 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
         v2<-minRange+(j+1)*rangenode;
         v3<-minRange+(j+3)*rangenode;
         v4<-minRange+(j+4)*rangenode;
-        cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
+        # cat(">>> i:", i, "<<<",v1,v2,v3,v4, "\n")
         
         listGeneralPartition[[i]] <- c(v1,v2,v3,v4)
         
@@ -503,7 +476,7 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
 }
 
 GeneralFuzzyGenerator <-function(type, statisticalResume){
-  corpus <- read.table(file=paste0("Corpus/GeneralAdjective.csv"), sep=",", header=TRUE)
+  corpus <- read.table(file=paste0("Corpus/Fuzzy/GeneralAdjective.csv"), sep=",", header=TRUE)
   maxRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MaxValue"])
   minRange <- as.character(statisticalResume[statisticalResume$ColName == type,"MinValue"])
   
@@ -650,11 +623,15 @@ PlottingTrendFuzzy <- function(variables, name="Undefined"){
 "
 DataInterpreterAdjective <- function(value, type="General",statisticalResume=NULL){
   if(!is.na(mainConfig[mainConfig$ColName == type,]$Rule)){
-    corpus <- read.table(file=paste0("Corpus/",type,"Adjective.csv"), sep=",", header=TRUE)
-    
     if(mainConfig[mainConfig$ColName == type,]$Rule == "fuzzy"){
-      result <- MembershipFuzzy(value, corpus);
+      corpus <- read.table(file=paste0("Corpus/Fuzzy/",type,"Adjective.csv"), sep=",", header=TRUE)
+      if(type == "Rainfall" && value == 0){
+        result <- list(InterpreterResult = as.character("no rain"), InterpreterIndex = 0)
+      }else{
+        result <- MembershipFuzzy(value, corpus);
+      }
     }else{
+      corpus <- read.table(file=paste0("Corpus/Range/",type,"Adjective.csv"), sep=",", header=TRUE)
       result <- MembershipClassifier(value, corpus);
     }
   }else{
@@ -689,7 +666,7 @@ DataInterpreter <- function(dataset,statisticalResume){
   #interpreterResult <- dataset;
   listResult <- list(Colname = vectorColName, InterpreterResult = vectorIntResult, InterpreterIndex = vectorIntIndex)
   #print(vectorIntResult)
-  print(listResult)
+  # print(listResult)
   return(listResult)
 }
 
@@ -740,63 +717,6 @@ OrdinalIndicator <- function(num){
     oi<-"th"
   }
   return(paste0(num,oi))
-}
-
-
-ChangeTimeDesc <- function(source, dataset, type = "0"){
-  n <- nrow(dataset)
-  timeFirst <- as.character(dataset[n-1,'DateTime'])
-  timeLast <- as.character(dataset[n,'DateTime'])
-  
-  timeFirst <- strptime(timeFirst, "%Y/%m/%d %H:%M:%OS")
-  timeLast <- strptime(timeLast, "%Y/%m/%d %H:%M:%OS")
-  
-  now <- as.character(Sys.time())
-  now <- strptime(now, "%Y-%m-%d")
-  dayData <- as.character(dataset[nrow(dataset),'DateTime'])
-  dayData <- strptime(dayData, "%Y/%m/%d")
-  same <- 0
-  
-  print(timeFirst)
-  
-  if(type == "0"){
-    if(now == dayData){
-      same <- 1
-    }else{
-      same <- 0
-    }
-  }else{
-    if(now == dayData){
-      same <- 1
-    }else{
-      same <- 2
-    }
-  }
-  
-  difTime <- as.numeric(timeLast-timeFirst,units="secs")
-  
-  
-  corpus <- read.table(file=paste0("Corpus/TimeDesc.csv"), sep=",", header=TRUE)
-  timeDesc <- as.character(corpus[corpus$SecMin < difTime & corpus$SecMax >= difTime & corpus$Same == same,"Desc"])
-  
-  result <- source
-  # print(source)
-  # print("~~~")
-  print(length(source))
-  print(timeFirst)
-  print(timeLast)
-  print(same)
-  print(timeDesc)
-  print(corpus)
-  if(grepl("@TimeDesc", source)){
-    # result <- str_replace(source, "@TimeDesc", timeDesc)
-    result <- gsub("@TimeDesc",timeDesc,source)
-    # result <- sapply(1:nrow(source), function(x) gsub("@TimeDesc",timeDesc,source[x]))
-  }
-  # print(result)
-  # print("11111")
-  
-  return (result)
 }
 
 DateInterval <- function(time1, time2){
@@ -952,201 +872,311 @@ ReadCurrentIntro <- function(dateTime){
 
 
 ResumeTrend <- function(statisticalResume){
-  #freq <- c("+"=0,"-"=0,"0"=0)
   freq <- table(statisticalResume["Trend"])
   result <- ""
-  print(freq)
-  
-  #if thre only 1 trend
-  if(as.numeric(freq)[1] == nrow(statisticalResume) && names(freq[1]) == "+"){
-    result <- "all trends were increasing from time to time"
-    return(result)
-  }else if(as.numeric(freq)[1] == nrow(statisticalResume) && names(freq[1]) == "-"){
-    result <- "all trends were decreasing from time to time"
-    return(result)
-  }
-  
   
   #FIRST CONDITION
-  if(freq["+"] <= freq["-"] && freq["+"] <= freq["0"]){
-    if(freq["-"] < freq["0"]){
-      #1ST GROUP
-      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
-      i<-1
-      n <- nrow(listTrend)
-      for(i in i:n){
-
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+  if(!is.na(freq["0"]) && !is.na(freq["+"]) && !is.na(freq["-"])){
+    if(freq["+"] <= freq["-"] && freq["+"] <= freq["0"]){
+      if(freq["-"] < freq["0"]){
+        #1ST GROUP
+        listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
           
-        }else{
-          result <- paste0(result,",",listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
-      }
-      
-      result <- paste(result, "trend is increased", "but ")
-      
-      #2ND GROUP
-      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
-      i<-1
-      for(i in i:n){
         
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+        result <- paste(result, "trend is increased", "but ")
+        
+        #2ND GROUP
+        listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+        i<-1
+        for(i in i:n){
           
-        }else{
-          result <- paste0(result,",",listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
-      }
-      
-      result <- paste(result, "trend is decreased and the rest is constant.")
-    }else{
-      #1ST GROUP
-      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
-      i<-1
-      n <- nrow(listTrend)
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
-          
-        }else{
-          result <- paste0(result,",",listTrend[i,"ColName"])
+        
+        result <- paste(result, "trend is decreased and the rest is constant.")
+      }else{
+        #1ST GROUP
+        listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
-      }
-      
-      result <- paste(result, "trend is increased", "and ")
-      
-      #2ND GROUP
-      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
-      i<-1
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
-          
-        }else{
-          result <- paste0(result,",",listTrend[i,"ColName"])
+        
+        result <- paste(result, "trend is increased", "and ")
+        
+        #2ND GROUP
+        listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+        i<-1
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
+        
+        result <- paste(result, "trend is constant but the rest is decreased.")
       }
-      
-      result <- paste(result, "trend is constant but the rest is decreased.")
+      #SECOND CONDITION
+    }else if(freq["-"] <= freq["+"] && freq["-"] <= freq["0"]){
+      if(freq["+"] < freq["0"]){
+        listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is decreased", "but ")
+        
+        listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+        i<-1
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is increased and the rest is constant.")
+      }else{
+        listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is decreased", "and ")
+        
+        listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+        i<-1
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is constant but the rest is increased.")
+      }
+    }else if(freq["0"] <= freq["-"] && freq["0"] <= freq["+"]){
+      if(freq["+"] < freq["-"]){
+        listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is constant", "and ")
+        
+        listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+        i<-1
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is increased and the rest is decreased.")
+      }else{
+        listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is constant", "and ")
+        
+        listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+        i<-1
+        for(i in i:n){
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
+        }
+        
+        result <- paste(result, "trend is decreased but the rest is increased.")
+      }
     }
-  #SECOND CONDITION
-  }else if(freq["-"] <= freq["+"] && freq["-"] <= freq["0"]){
-    if(freq["+"] < freq["0"]){
-      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
-      i<-1
-      n <- nrow(listTrend)
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+  }else{
+    if(is.na(freq["0"]) && is.na(freq["+"])){
+      # ALL -
+      result <- "Trend of all variable is decreased."
+    }else if(is.na(freq["0"]) && is.na(freq["-"])){
+      # ALL +
+      result <- "Trend of all variable is increased."
+      
+    }else if(is.na(freq["+"]) && is.na(freq["-"])){
+      # ALL 0
+      result <- "Trend of all variable is constant."
+      
+    }else if(is.na(freq["0"])){
+      # Only + -
+      if(freq["-"] > freq["+"]){
+        #more 0
+        listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
           
-        }else{
-          result <- paste0(result,",",listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
-      }
-      
-      result <- paste(result, "trend is decreased", "but ")
-      
-      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
-      i<-1
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+        
+        result <- paste(result, "trend is increased", "but the rest is decreased.")
+      }else{
+        #more +
+        listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
           
-        }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
+        
+        result <- paste(result, "trend is decreased", "but the rest is increased.")
+        
       }
-      
-      result <- paste(result, "trend is increased and the rest is constant.")
-    }else{
-      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
-      i<-1
-      n <- nrow(listTrend)
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+    }else if(is.na(freq["+"])){
+      # Only 0 -
+      if(freq["0"] > freq["-"]){
+        #more 0
+        listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
           
-        }else{
-          result <- paste0(result,",",listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
-      }
-      
-      result <- paste(result, "trend is decreased", "and ")
-      
-      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
-      i<-1
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+        
+        result <- paste(result, "trend is decreased", "and the rest is constant.")
+      }else{
+        #more +
+        listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
           
-        }else{
-          result <- paste0(result,",",listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
+        
+        result <- paste(result, "trend is constant", "and the rest is decreased.")
+        
       }
-      
-      result <- paste(result, "trend is constant but the rest is increased")
-    }
-  }else if(freq["0"] <= freq["-"] && freq["0"] <= freq["+"]){
-    if(freq["+"] < freq["-"]){
-      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
-      i<-1
-      n <- nrow(listTrend)
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+    }else if(is.na(freq["-"])){
+      # Only 0 +
+      if(freq["0"] > freq["+"]){
+        #more 0
+        listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
           
-        }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
-      }
-      
-      result <- paste(result, "trend is constant", "and ")
-      
-      listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
-      i<-1
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
+        
+        result <- paste(result, "trend is increased", "and the rest is constant.")
+      }else{
+        #more +
+        listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
+        i<-1
+        n <- nrow(listTrend)
+        for(i in i:n){
           
-        }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
+          if(i==1){
+            result <- paste0(result,listTrend[i,"ColName"])
+            
+          }else{
+            result <- paste0(result,", ",listTrend[i,"ColName"])
+          }
         }
+        
+        result <- paste(result, "trend is constant", "and the rest is increased.")
+        
       }
-      
-      result <- paste(result, "trend is increased and the rest is decreased.")
-    }else{
-      listTrend <- statisticalResume[statisticalResume$Trend == "0", ]
-      i<-1
-      n <- nrow(listTrend)
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
-          
-        }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
-        }
-      }
-      
-      result <- paste(result, "trend is constant", "and ")
-      
-      listTrend <- statisticalResume[statisticalResume$Trend == "-", ]
-      i<-1
-      for(i in i:n){
-        if(i==1){
-          result <- paste0(result,listTrend[i,"ColName"])
-          
-        }else{
-          result <- paste0(",",result,listTrend[i,"ColName"])
-        }
-      }
-      
-      result <- paste(result, "trend is decreased but the rest is increased")
     }
   }
   
-  return(result)
-    
+  return(result)   
 }
 
 #Repeated Value analysis
@@ -1158,7 +1188,7 @@ ResumeRepeatedAnalysis <- function(dataset){
   #lengths: int [1:26] 5 1 1 1 1 1 1 1 1 1 ...
   #values : int [1:26] 10 15 13 14 12 13 14 10 12 14 ...
   
-  repeatedSequence <- rep(lengthEncoding$lengths >= 3, times=lengthEncoding$lengths)
+  repeatedSequence <- rep(lengthEncoding$lengths >= 7, times=lengthEncoding$lengths)
   #Example repeatedSequence
   #[1] FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
   #[20]  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
@@ -1203,7 +1233,7 @@ ResumeHighestGrowthAnalysis <- function(dataset, type=NULL){
   
   isNegative <- isNegative<0
   
-  print(isNegative)
+  # print(isNegative)
   status1 <- TRUE
   status2 <- TRUE
   tempGrowth <-0
@@ -1357,7 +1387,7 @@ ResumeRepeated <- function (colName, dateTime, listRepeated){
 }#end function
 
 ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, vectorEnd){
-  print(interpreterResult)
+  # print(interpreterResult)
   
   if(length(interpreterResult) != 0){
     mainSentence<-""
@@ -1396,7 +1426,7 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
         }
       }
       
-      cat(reps, "\n")
+      # cat(reps, "\n")
       
       subSentence <- paste(subSentence, colName, "stayed constant at", dataset[[colName]][vectorStart[i]])
       subSentence <- paste0(subSentence, " (", interpreterResult[i],  ")")
@@ -1413,8 +1443,8 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
 LexicalDateRange  <- function(dateStart, dateEnd){
   #FORMAT: mm/dd/yyyy -> "07/01/2018"
   
-  print(dateStart)
-  print(dateEnd)
+  # print(dateStart)
+  # print(dateEnd)
   startMonth <- as.numeric(substr(dateStart,1,2))
   endMonth <- as.numeric(substr(dateEnd,1,2))
   
@@ -1499,8 +1529,8 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
                   indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
                 }
                 
-                print((interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i])
-                print(indicator)
+                # print((interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i])
+                # print(indicator)
                 #if there's nothing to grouping, then put "and" on the end of grouping
                 if(as.numeric(indicator["TRUE"]) > 1){
                   subSentence <- paste0(subSentence,", ", colName)
@@ -1529,7 +1559,7 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
         subSentence <- paste(subSentence, phrase, interpreter)
         mainSentence <- paste0(mainSentence, subSentence,". ")
       }
-      cat("reps:", i, " ",reps,"\n")
+      # cat("reps:", i, " ",reps,"\n")
       
       i <- i + 1
     }
@@ -1599,8 +1629,8 @@ PredictContent <- function(interpreterResult, vectorTrendDesc, dataset){
                   indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
                 }
                 
-                print((interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i])
-                print(indicator)
+                # print((interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i])
+                # print(indicator)
                 #if there's nothing to grouping, then put "and" on the end of grouping
                 if(as.numeric(indicator["TRUE"]) > 1){
                   subSentence <- paste0(subSentence,", ", colName)
@@ -1624,7 +1654,7 @@ PredictContent <- function(interpreterResult, vectorTrendDesc, dataset){
         subSentence <- paste(subSentence, phrase, interpreter)
         mainSentence <- paste0(mainSentence, subSentence,". ")
       }
-      cat("reps:", i, " ",reps,"\n")
+      # cat("reps:", i, " ",reps,"\n")
       
       i <- i + 1
     }
@@ -1691,7 +1721,7 @@ LD_Compare <- function (index_data){
       IVL[i]="0"
     }
   }
-  print(IVL)
+  # print(IVL)
   x<-TrendDesc_template(IVL)
   return(x)
 }
@@ -1778,7 +1808,7 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
   sentence1 <- ""
   if(length(vectorGrowth) != 0){
     for(i in i:length(vectorGrowth)){
-      if(i == length(vectorGrowth)){
+      if(i == length(vectorGrowth) && i != 1){
         sentence1 <- paste0(sentence1, " and ", vectorGrowth[i], ".")
       }else{
         sentence1 <- paste0(sentence1, vectorGrowth[i], ", ")
@@ -1791,7 +1821,7 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
     sentence2 <- "While "
     i<-1
     for(i in i:length(vectorDecay)){
-      if(i == length(vectorDecay)){
+      if(i == length(vectorDecay) && i !=1){
         sentence2 <- paste0(sentence2, "and ", vectorDecay[i], ".")
       }else{
         sentence2 <- paste0(sentence2, vectorDecay[i], ", ")
@@ -1799,7 +1829,7 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
     }
   }
   
-  result <- paste(sentence1, sentence2)
+  result <- paste0(sentence1, sentence2)
   return(result)
 }
 
@@ -1859,8 +1889,53 @@ KMP <- function(string, pattern){
   
 }
 
+# result <- "hourly"
+# }else if(interval == 24){
+#   result <- "daily"
+# }else if(interval == 168){
+#   result <- "weekly"
+# }else if(interval == 672 || interval == 696 || interval == 720 || interval == 744){
+#   result <- "monthly"
+# }else if(interval == 8760 || interval == 8736){
+#   result <- "yearly"
 
-KMP(c(1,2,3,5,2,4,2,1,3,4,4,2,1), c(3,5,2,4,2))
+MotifDiscoveryAnalysis <- function(dataset, datasetIntervalValue){
+  interval <- DataInterpreterInterval(datasetIntervalValue, type = "interval")
+
+  if(interval == "hourly"){
+    n <- 6
+  }else if(interval == "daily"){
+    n <- 7
+  }else if(interval == "weekly" || interval == "monthly" ||interval == "yearly"){
+    n <- 4
+  }
+
+  index <- nrow(dataset) - n
+  
+  #pattern
+  pattern <- dataset[index:nrow(dataset),]
+  
+  #dataest
+  dataset <- dataset[1:index,]
+  # print(pattern)
+  # print(length(pattern))
+  
+  result <- list()
+  i<-1
+  for(i in i:length(dataset)){
+    
+    if(is.null(KMP(dataset[[i]],pattern[[i]]))){
+      result[[i]] <- NA
+    }else{
+      result[[i]] <- KMP(dataset[[i]],pattern[[i]])
+    }
+  }
+  
+  return(result)
+}
+
+
+KMP(c(1,2,3,5,2,4,2,1,3,4,4,2,1,3,5,2,4,2), c(3,5,2,4,"a"))
 
 MissingValueHandling <- function(dataset){
   md.pattern(dataset)
@@ -1877,9 +1952,9 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
   case2 <- c("Temperature")
   case3 <- c("CO","NO","NO2","NOX","O3","PM10","PM25","SO2")
   
-  boolcase1 <- case1 %in% colName
-  boolcase2 <- case2 %in% colName
-  boolcase3 <- case3 %in% colName
+  boolcase1 <- case1 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
+  boolcase2 <- case2 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
+  boolcase3 <- case3 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
   
   result <- NULL
   vectorResult <- NULL
@@ -1890,25 +1965,31 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
     cloudState <- lapply(interpreterPredict,`[[`, which(interpreterPredict$Colname == "CloudCoverage"))$InterpreterResult
     
     skyState <- skyStateAgg(rainState, cloudState)
-    skyIntro <- ReadIntro(type="Predict")
-    skyIntro <- gsub("@conj", "tomorrow sky will be", skyIntro)
+    # skyIntro <- ReadIntro(type="Predict")
+    # skyIntro <- gsub("@conj", "tomorrow sky will be")
+    skyIntro <- "tomorrow sky will be"
     skySentence <- paste(skyIntro, skyState)
     
     result <- paste(skySentence)
     vectorResult <- case1
+  }
+  
   #CASE 2: (TEMPERATURE SENTENCE)
-  }else if(sum(boolcase2 == "FALSE") == 0){
+  if(sum(boolcase2 == "FALSE") == 0){
     #get all value when list$colname value == temperature
     temperatureState <- lapply(interpreterPredict,`[[`, which(interpreterPredict$Colname == "Temperature"))$InterpreterResult
     
     temperatureIntro <- ReadIntro(type = "Temperature")
     temperatureTrendDesc<- TrendDescTemperature()
     temperatureSentence <- paste(temperatureIntro, temperatureTrendDesc, temperatureState)
+    temperatureSentence <- paste0(temperatureSentence,".")
     
     result <- paste(result, temperatureSentence)
     vectorResult <- c(vectorResult, case2)
+  }
+  
   #CASE3: (AIR QUALITY SENTENCE)  
-  }else if(sum(boolcase3 == "FALSE") == 0){
+  if(sum(boolcase3 == "FALSE") == 0){
     AQdataLast <- datas[-1,case3]
     AQdatanow <- datas[nrow(datas),case3]
     AQdataPredict <- PredictDataset(datas, "%d/%m/%Y")
@@ -1933,9 +2014,9 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
     vectorResult <- c(vectorResult, case3)
   }
   
-  print(result)
-  print(vectorResult)
-  #return(list(Sentence = result, VectorResult = vectorResult))
+  # print(result)
+  # print(vectorResult)
+  return(list(Sentence = result, VectorResult = vectorResult))
 }
 
 #Function Sky State Aggregation with Simple Conjunction
@@ -1962,7 +2043,7 @@ skyStateAgg <- function (rain,cloud){
     Conjunction<-"covered with"
   }else{
     
-    Conjunction<- "although its covered by"
+    Conjunction<- "although it's covered by"
     
   }
   
