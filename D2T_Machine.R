@@ -1430,7 +1430,7 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
       
       subSentence <- paste(subSentence, colName, "stayed constant at", dataset[[colName]][vectorStart[i]])
       subSentence <- paste0(subSentence, " (", interpreterResult[i],  ")")
-      mainSentence <- paste0(mainSentence, "During ", subSentence,". ")
+      mainSentence <- paste0(mainSentence, "During ", subSentence,".")
       i <- i + 1
     }
     
@@ -1515,11 +1515,16 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
                 colName <- interpreterResult$Colname[j]
                 
                 #isGroupingAvailable: Vector, TRUE OR FALSE
+                #TRUE FALSE
+                #0    0
                 indicator <- c("TRUE"=0, "FALSE"=0)
                 isGroupingAvailable <- (interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i]
                 isGroupingAvailable <- table(isGroupingAvailable)
                 
                 #handling if table dont have FALSE or TRUE value, then use default value (0)
+                #Example:
+                #TRUE FALSE     TRUE FALSE     TRUE FALSE     TRUE FALSE
+                #0    2         3    2         1    0         0    0
                 if(!is.na(isGroupingAvailable["FALSE"]) && !is.na(isGroupingAvailable["TRUE"])){
                   indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
                   indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
@@ -1575,6 +1580,103 @@ ReadPredictIntro <-function (intro) {
   intro <- gsub("@conj",conj, intro)
   
   return(intro)
+}
+
+PredictDesc <- function(interpreterResult, vectorTrendDesc, dataset){
+  result <- ""
+  
+  #error handling
+  if(length(vectorTrendDesc) != 0){
+    mainSentence<-""
+    
+    #marking if the index has been grouped
+    #example: 1 2 0 4 5 0 0
+    # 0 represent that index still not been checked
+    i<-1
+    reps<- rep(0, length(vectorTrendDesc))
+    
+    #first itter
+    while(i <= length(vectorTrendDesc) && length(reps[reps == 0]) != 0 ){
+      
+      subSentence <- ""
+      if(reps[i] == 0){
+        reps[i] <- i
+        
+        colName <- interpreterResult$Colname[i]
+        
+        subSentence <- paste0(colName)
+        
+        #handling if not the last value
+        if(i != length(vectorTrendDesc)){
+          j <- i + 1
+          
+          #second itter
+          while(j <= length(vectorTrendDesc)){
+            if(length(reps[reps == 0]) != 0){
+              if(interpreterResult$InterpreterResult[i] == interpreterResult$InterpreterResult[j] && vectorTrendDesc[i] == vectorTrendDesc[j]){
+                #mark the index as checked
+                reps[j] <- j
+                
+                colName <- interpreterResult$Colname[j]
+                
+                #isGroupingAvailable: Vector, TRUE OR FALSE
+                #TRUE FALSE
+                #0    0
+                indicator <- c("TRUE"=0, "FALSE"=0)
+                isGroupingAvailable <- (interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i]
+                isGroupingAvailable <- table(isGroupingAvailable)
+                
+                #handling if table dont have FALSE or TRUE value, then use default value (0)
+                #Example:
+                #TRUE FALSE     TRUE FALSE     TRUE FALSE     TRUE FALSE
+                #0    2         3    2         1    0         0    0
+                if(!is.na(isGroupingAvailable["FALSE"]) && !is.na(isGroupingAvailable["TRUE"])){
+                  indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
+                  indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
+                }else if(!is.na(isGroupingAvailable["TRUE"])){
+                  indicator["TRUE"] <- as.numeric(isGroupingAvailable["TRUE"])
+                }else if(!is.na(isGroupingAvailable["FALSE"])){
+                  indicator["FALSE"] <- as.numeric(isGroupingAvailable["FALSE"])
+                }
+                
+                # print((interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i])
+                # print(indicator)
+                #if there's nothing to grouping, then put "and" on the end of grouping
+                if(as.numeric(indicator["TRUE"]) > 1){
+                  subSentence <- paste0(subSentence,", ", colName)
+                }else{
+                  subSentence <- paste0(subSentence,", and ", colName)
+                }
+                
+                
+              }
+              j <- j + 1
+            }else{
+              break
+            }
+          }
+        }
+        
+        #after grouping the column
+        interpreter <- interpreterResult$InterpreterResult[i]
+        if(interpreter == "Constant"){
+          phrase <- change_word_bank_AQ2()
+          interpreter = "from the first time"
+        }else{
+          phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
+        }
+        
+        subSentence <- paste(subSentence, "will", phrase, interpreter)
+        mainSentence <- paste0(mainSentence, subSentence,". ")
+      }
+      # cat("reps:", i, " ",reps,"\n")
+      
+      i <- i + 1
+    }
+    
+  }#end if repValue
+  
+  return(mainSentence)
 }
 
 PredictContent <- function(interpreterResult, vectorTrendDesc, dataset){
@@ -1765,6 +1867,18 @@ change_word_bank_AQ2 <- function (){
   
   result <- phrase[random_value]
   return (result)
+}
+
+change_word_bank_AQ3 <- function (fragmentCode){
+  phraseAQ <- read.table(file="Corpus/AQ_phrase_bank3.csv", sep=",", header=TRUE)
+  n=length(phraseAQ); i=1; 
+  for(i in i:n){
+    m=colnames(phraseAQ[i])
+    if(fragmentCode==m){
+      j=runif(1,1,n+1)
+      return(phraseAQ[j,i])
+    }
+  }
 }
 
 DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){

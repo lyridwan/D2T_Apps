@@ -1,7 +1,7 @@
 Category,Lower,Upper
-Calm,0,3
-Light Air,3,6
-Light Breeze,6,12
+calm,0,3
+light Air,3,6
+light Breeze,6,12
 Gentle Breeze,12,20
 Moderate Breeze,20,30
 Fresh Breeze,30,40

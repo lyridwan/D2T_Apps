@@ -7,6 +7,7 @@ source("D2T_Machine.R", local = TRUE)
 # READ DATA
 dataset <- as.data.frame(fread(file="Datasets/exc_2001.csv"))
 dataset <- as.data.frame(fread(file="Datasets/experiment.csv"))
+dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
 colnames(dataset)[1] <- "DateTime"
 
 #
@@ -195,7 +196,7 @@ if(maxValue != 0){
 
 
 resumeHighestGrowth <- AggResumeGrowth(vectorSentenceHighestGrowth, vectorSentenceHighestDecay)
-resumeResult <- paste0(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGrowth)
+resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGrowth)
 
 
 # 
@@ -227,7 +228,7 @@ if(!is.null(specialCorpus$Sentence)){
   predictIntro <- paste(predictIntro, specialCorpus$Sentence)
 }
 
-predictContent <- CurrentDesc(interpreterPredict,vectorTrendDescriptionAnalysis,datasetWithoutDate)
+predictContent <- PredictDesc(interpreterPredict,vectorTrendDescriptionPredict,datasetWithoutDate)
 predictResult <- paste(predictIntro, predictContent)
 
 
