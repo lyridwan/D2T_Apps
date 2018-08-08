@@ -760,6 +760,27 @@ DataInterpreterInterval <- function (interval, type = "default"){
     }else{
       result <- ""
     }
+    if(interval == "hourly"){
+      n <- 6
+    }else if(interval == "daily"){
+      n <- 7
+    }else if(interval == "weekly" || interval == "monthly" ||interval == "yearly"){
+      n <- 4
+    }
+  }else if(type == "limit"){
+    if(interval == 1){
+      result <- 6
+    }else if(interval == 24){
+      result <- 7
+    }else if(interval == 168 || 
+             interval == 720 || 
+             interval == 744 || 
+             interval == 8760 || 
+             interval == 8736){
+      result <- 4
+    }else{
+      result <- ""
+    }
   }else{
     if(interval == 1){
       result <- "hour"
@@ -2016,14 +2037,8 @@ KMP <- function(string, pattern){
 MotifDiscoveryAnalysis <- function(dataset, datasetIntervalValue){
   interval <- DataInterpreterInterval(datasetIntervalValue, type = "interval")
 
-  if(interval == "hourly"){
-    n <- 6
-  }else if(interval == "daily"){
-    n <- 7
-  }else if(interval == "weekly" || interval == "monthly" ||interval == "yearly"){
-    n <- 4
-  }
-
+  
+  n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
   index <- nrow(dataset) - n
   
   #pattern
@@ -2048,8 +2063,6 @@ MotifDiscoveryAnalysis <- function(dataset, datasetIntervalValue){
   return(result)
 }
 
-
-KMP(c(1,2,3,5,2,4,2,1,3,4,4,2,1,3,5,2,4,2), c(3,5,2,4,"a"))
 
 MissingValueHandling <- function(dataset){
   md.pattern(dataset)
