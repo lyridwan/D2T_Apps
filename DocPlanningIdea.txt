@@ -2,3 +2,14 @@
 --nanti di rumah kerjain KMP
 --KMP udah sampe detect, tinggal bikin corpus
 --KMP hanya untuk integer/categorical
+
+idea corpus:
+Tidak ada pola yang terulang dari 1 minggu belakangan ini
+for this week, no similar patterns were found, for each parameter
+in each parameter the same data pattern is not found with this week's data pattern
+tidak ditemukan kecocokan pola data yang sama seperti pola data minggu ini,  untuk setiap parameternya
+for each parameter, there is no match pattern similar to this week's pattern
+there is no data pattern that that this week's data pattern
+
+jika ditemukan:
+ditemukan pola data yang sama seperti dengan minggu ini pada tanggal xxx
