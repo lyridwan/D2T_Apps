@@ -2125,9 +2125,12 @@ MotifDiscoveryMicroPlan <- function(listColumn, listMD){
   #If there's no pattern match
   MDcontent <- ""
   if(sum(!is.na(listColumn)) == 0){
+    verb <- MotifDiscoveryRE()
     MDintro <- paste0("For the past ", limit, " ", interval, " ,")
-    MDcontent <- "no @verb patterns were found for each categorical/integer parameters."
-  
+    MDcontent <- paste("no", verb, "patterns were found for each categorical/integer parameters.")
+    
+    MDsentence <- paste(MDintro, MDcontent)
+    return(MDsentence)
   #Aggregation
   }else{
     #There are a matching USD data pattern in the last 7 days 
