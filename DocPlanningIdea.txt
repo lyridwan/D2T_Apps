@@ -13,3 +13,18 @@ there is no data pattern that that this week's data pattern
 
 jika ditemukan:
 ditemukan pola data yang sama seperti dengan minggu ini pada tanggal xxx
+USD and JPY data patterns match with their data pattern for the last 7 days.
+USD and JPY data patterns match the pattern of their last 7 days.
+For the last 7 days, USD has a similar data pattern on August 22 2018.
+Usd has
+
+There is a matching of USD data patterns on August 22-24 2018 with data patterns of the last 7 days
+There is a matching USD data pattern in the last 7 days with USD data patterns from August 22-24 2018 and September 23-25 2018.
+
+USD and JPY data patterns match with their last 7 days data pattern.
+
+
+
+
+For the last 7 days, USD has a similar data pattern on August 22 2018.
+There is a match of the USD data pattern in the last 7 days data pattern with data on August 22-24 2018 and September 23-25 2018 with
