@@ -6,8 +6,8 @@ source("D2T_Machine.R", local = TRUE)
 
 # READ DATA
 dataset <- as.data.frame(fread(file="Datasets/exc_2001.csv"))
-dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
 dataset <- as.data.frame(fread(file="Datasets/experiment.csv"))
+dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
 colnames(dataset)[1] <- "DateTime"
 
 #
@@ -180,15 +180,19 @@ if(maxValue != 0){
 
 resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName)
 trendIntro <- ReadIntro(type="Trend")
-resumeTrend <- paste0(trendIntro," ",ResumeTrend(statisticalResume),".")
+resumeTrend <- paste0(trendIntro," ",ResumeTrend(statisticalResume))
 
+resumeRepeatedLimit <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
+resumeRepeatedInterval <- paste0(DataInterpreterInterval(datasetIntervalValue, type = "default"), "s")
 if(maxValue != 0){
   resumeRepeated <- ResumeRepeated2(columnName[[maxIndex]], dataset, vectorRepeatedInterpretResult, listRepeatedAnalysisResult[[maxIndex]]$Start, listRepeatedAnalysisResult[[maxIndex]]$End)
-  resumeRepeated <- paste("There were some repeated value more than 4 days: ", resumeRepeated)
+  resumeRepeated <- paste("There were some repeating value more than @limit @interval: ", resumeRepeated)
   }else{
-  resumeRepeated <- "There were no repeating values within 4 days or more, every value changed from time to time."
-}
+  resumeRepeated <- "There were no repeating values within @limit @interval or more, every value changed from time to time."
+  }
 
+resumeRepeated <- gsub("@limit", resumeRepeatedLimit, resumeRepeated)
+resumeRepeated <- gsub("@interval", resumeRepeatedInterval, resumeRepeated)
 
 # MotifDiscoveryAnalys
 # 
@@ -198,7 +202,9 @@ if(maxValue != 0){
 resumeHighestGrowth <- AggResumeGrowth(vectorSentenceHighestGrowth, vectorSentenceHighestDecay)
 resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGrowth)
 
-
+MDinterpreterResult <- MotifDiscoveryInterpreter(datasetWithoutDate, datasetIntervalValue)
+MDdocPlanResult <- MotifDiscoveryDocPlan(MDinterpreterResult)
+MotifDiscoveryMicroPlan(MDdocPlanResult, MDinterpreterResult)
 # 
 currentIntro <- ReadCurrentIntro(dataset[nrow(dataset),"DateTime"])
 currentDesc <- CurrentDesc(interpreterNow, vectorTrendDescriptionAnalysis, datasetWithoutDate)

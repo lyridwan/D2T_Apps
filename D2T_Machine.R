@@ -768,10 +768,13 @@ DataInterpreterInterval <- function (interval, type = "default"){
       n <- 4
     }
   }else if(type == "limit"){
+    #hourly data
     if(interval == 1){
       result <- 6
+    #daily data
     }else if(interval == 24){
       result <- 7
+    #monthly&yearly data
     }else if(interval == 168 || 
              interval == 720 || 
              interval == 744 || 
@@ -1209,7 +1212,10 @@ ResumeRepeatedAnalysis <- function(dataset){
   #lengths: int [1:26] 5 1 1 1 1 1 1 1 1 1 ...
   #values : int [1:26] 10 15 13 14 12 13 14 10 12 14 ...
   
-  repeatedSequence <- rep(lengthEncoding$lengths >= 7, times=lengthEncoding$lengths)
+  #limit
+  n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
+  
+  repeatedSequence <- rep(lengthEncoding$lengths >= n, times=lengthEncoding$lengths)
   #Example repeatedSequence
   #[1] FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
   #[20]  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
@@ -1409,8 +1415,17 @@ ResumeRepeated <- function (colName, dateTime, listRepeated){
 
 ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, vectorEnd){
   # print(interpreterResult)
-  
-  if(length(interpreterResult) != 0){
+  #During 6-21 Jul 2016, 13-20 Mar 2017, 2-24 Apr 2017, 14-21 Jun 2017 Rainfall stayed constant at 0 (no rain)
+  if(length(interpreterResult) == 1){
+    dateStart <- dataset[["DateTime"]][vectorStart[i]]
+    dateEnd <- dataset[["DateTime"]][vectorEnd[i]]
+    
+    dateRange <- LexicalDateRange(dateStart,dateEnd)
+    
+    subSentence <- paste(dateRange, colName, "stayed constant at", dataset[[colName]][vectorStart[i]])
+    subSentence <- paste0(subSentence, " (", interpreterResult[i],  ")")
+    mainSentence <- paste0("During ", subSentence,".")
+  }else if(length(interpreterResult) != 0){
     mainSentence<-""
     
     i<-1
@@ -1455,7 +1470,7 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
       i <- i + 1
     }
     
-  }#end if repValue
+  }
   
   return(mainSentence)
 }#end function
@@ -2024,43 +2039,216 @@ KMP <- function(string, pattern){
   
 }
 
-# result <- "hourly"
-# }else if(interval == 24){
-#   result <- "daily"
-# }else if(interval == 168){
-#   result <- "weekly"
-# }else if(interval == 672 || interval == 696 || interval == 720 || interval == 744){
-#   result <- "monthly"
-# }else if(interval == 8760 || interval == 8736){
-#   result <- "yearly"
-
-MotifDiscoveryAnalysis <- function(dataset, datasetIntervalValue){
-  interval <- DataInterpreterInterval(datasetIntervalValue, type = "interval")
-
-  
+MotifDiscoveryAnalysis <- function(colName, dataset, datasetIntervalValue){
+  print(dataset)
   n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
-  index <- nrow(dataset) - n
+  index <- length(dataset)+1 - n
   
   #pattern
-  pattern <- dataset[index:nrow(dataset),]
+  pattern <- dataset[index:length(dataset)]
   
   #dataest
-  dataset <- dataset[1:index,]
-  # print(pattern)
+  dataset <- dataset[1:index]
+  print(dataset)
+  print(pattern)
   # print(length(pattern))
   
   result <- list()
-  i<-1
-  for(i in i:length(dataset)){
-    
-    if(is.null(KMP(dataset[[i]],pattern[[i]]))){
-      result[[i]] <- NA
-    }else{
-      result[[i]] <- KMP(dataset[[i]],pattern[[i]])
-    }
+  if(!is.null(KMP(dataset, pattern))){
+    result$total <- length(KMP(dataset,pattern))
+    result$pattern <- KMP(dataset,pattern)
+  }else{
+    result$total <- 0
+    result$pattern <- NA
   }
   
   return(result)
+}
+
+MotifDiscoveryInterpreter <- function(dataset, datasetIntervalValue){
+  result <- NA
+  
+  listMD <- list()
+  i<-1
+  for(i in i:length(dataset)){
+    print(colnames(dataset)[i])
+    listMD[[i]] <- MotifDiscoveryAnalysis(colnames(dataset)[i], dataset[[i]], datasetIntervalValue)
+  }
+  return(listMD)
+}
+
+MotifDiscoveryDocPlan <- function(listMD){
+  listCategorical <- mainConfig[which(mainConfig$Type == ("integer") | mainConfig$Type == ("categorical")),]
+  
+  
+  if(nrow(listCategorical) != 0){
+    
+    listColumn <- rownames(listCategorical)
+    
+    i<-1
+    for(i in i:length(listColumn)){
+      if(is.na(listMD[[as.numeric(listColumn[i])]]$pattern[1])) {
+        listColumn[i] <- NA
+      }
+    }
+  }else{
+    listColumn <- NULL
+  }
+  
+  return(listColumn)
+}
+
+MotifDiscoveryMicroPlan <- function(listColumn, listMD){
+  # > listColumn
+  # [1] "6" NA  NA  NA  NA
+  
+  # > listMD
+  # [[6]]
+  # [[6]]$`total` 
+  # [1] 9
+  # 
+  # [[6]]$pattern
+  # [1] 10 11 12 13 14 15 16 17 18
+  # 
+  # 
+  # [[7]]
+  # [[7]]$`total`
+  # [1] 0
+  # 
+  # [[7]]$pattern
+  # [1] NA
+  
+  limit <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
+  interval <- paste0(DataInterpreterInterval(datasetIntervalValue, type = "default"), "s")
+  
+  
+  #If there's no pattern match
+  MDcontent <- ""
+  if(sum(!is.na(listColumn)) == 0){
+    MDintro <- paste0("For the past ", limit, " ", interval, " ,")
+    MDcontent <- "no @verb patterns were found for each categorical/integer parameters."
+  
+  #Aggregation
+  }else{
+    #There are a matching USD data pattern in the last 7 days 
+    #with data patterns from August 22-24 2018 and September 23-25 2018.
+    
+    #if pattern found only 1 parameter
+    if(sum(!is.na(listColumn)) == 1){
+      selectedColindex <- as.numeric(listColumn[which(!is.na(listColumn))])
+      selectedColname <- columnName[selectedColindex]
+      verb <- MotifDiscoveryRE()
+      
+      dateAggregation <- ""
+      i <- 1
+      #Iterasi sebanyak pattern yang ada dalam list
+      for(i in i:length(listMD[[selectedColindex]]$pattern)){
+        indexMD <- as.numeric(listMD[[selectedColindex]]$pattern[i])
+        startDate <- dataset[indexMD,"DateTime"]
+        endDate <- dataset[indexMD + limit,"DateTime"]
+        
+        dateRange <- LexicalDateRange(startDate,endDate)
+        
+        #first
+        if(i == 1){
+          dateAggregation <- paste0(dateAggregation, dateRange)
+        #middle
+        }else if(i == length(listMD[[selectedColindex]]$pattern)){
+          dateAggregation <- paste0(dateAggregation, ", and ", dateRange, ".")
+        #lastcondition
+        }else{
+          dateAggregation <- paste0(dateAggregation, ", ", dateRange)
+        }
+      }
+      
+      #single pattern found
+      if(length(listMD[[selectedColindex]]$pattern) == 1){
+        tobe <- "is"
+        s <- ""
+      }else{
+        tobe <- "are"
+        s <- "s"
+      }
+      
+      #a or an replace
+      if(verb == "identical"){
+        a <- "an"
+      }else{
+        a <- "a"
+      }
+      
+      dateRangedataset <- LexicalDateRange(dataset[nrow(dataset)-limit, "DateTime"], dataset[nrow(dataset), "DateTime"])
+      
+      MDcontent <- paste("There @tobe @a", verb, selectedColname, "data pattern", "in the last", limit, interval,
+                         "(@dateNow)", "with data pattern@s from", dateAggregation)
+      MDcontent <- gsub("@tobe", tobe, MDcontent)
+      MDcontent <- gsub("@s", s, MDcontent)
+      MDcontent <- gsub("@a", a, MDcontent)
+      MDcontent <- gsub("@dateNow", dateRangedataset, MDcontent)
+      return(MDcontent)
+    }else{
+      #removing NA value
+      
+      
+      listColumn2 <- listColumn[which(!is.na(listColumn))]
+      
+      listColumnName <- columnName[as.numeric(listColumn2)]
+      
+      MDcontent <- ""
+      groupColumn <- ""
+      i<-1
+      for(i in i:length(listColumnName)){
+        #INTRO
+        if(i != length(listColumnName)){
+          groupColumn <- paste0(groupColumn, listColumnName[i], ", ")
+        }else{
+          groupColumn <- paste0(groupColumn, "and ", listColumnName[i])
+        }
+        
+        #CONTENT
+        selectedColindex <- as.numeric(listColumn2[i])
+        dateAggregation <- ""
+        j <- 1
+        #Iterasi sebanyak pattern yang ada dalam list
+        for(j in j:length(listMD[[selectedColindex]]$pattern)){
+          indexMD <- as.numeric(listMD[[selectedColindex]]$pattern[j])
+          startDate <- dataset[indexMD,"DateTime"]
+          endDate <- dataset[indexMD + limit,"DateTime"]
+          
+          dateRange <- LexicalDateRange(startDate,endDate)
+          
+          #first
+          if(j == 1){
+            dateAggregation <- paste0(dateAggregation, dateRange)
+            #middle
+          }else if(j == length(listMD[[selectedColindex]]$pattern)){
+            dateAggregation <- paste0(dateAggregation, ", and ", dateRange, ". ")
+            #lastcondition
+          }else{
+            dateAggregation <- paste0(dateAggregation, ", ", dateRange)
+          }
+        }
+        
+        #USD data pattern matches with the data pattern from August 22
+        MDcontent <- paste0(MDcontent, listColumnName[i], " data pattern matches with their data from ", dateAggregation)
+      }
+      #USD and JPY data patterns match with their last 7 days data pattern.
+      MDintro <- paste(groupColumn, "data patterns match with their last", limit, interval, "data pattern.")
+      MDsentence <- paste(MDintro, MDcontent)
+      return(MDsentence)
+    }
+  }
+}
+
+#Motif Discovery Reffering Expressions
+MotifDiscoveryRE <- function (){
+  phrase <- as.matrix(read.table("Corpus/MotifDiscoveryRE.csv", header=FALSE, sep=';', quote=""))
+  # print(corpus)
+  n <- length(phrase)
+  random_value <- as.integer(runif(1,1,n+0.5))
+  
+  result <- phrase[random_value]
+  return (result)
 }
 
 
