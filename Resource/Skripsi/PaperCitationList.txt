@@ -1,0 +1,5 @@
+[1] P. Grestl, "Linking linguistic and non-linguistic information," Data & Knowledge Engineering.,vol. 8, pp. 205-222, 1992.
+[2] E. Reiter, “An Architecture for Data-to-Text Systems,” Comput. Intell., vol. 27, no. 1, pp. 23–40, 2011.
+[3] J. Bateman and M. Zock, “Natural Language Generation,” Oxford Handb. Comput. Linguist., no. December 2017, pp. 1–21, 2012. 
+[4] J. Soehn et al, "Requirements of a User-Friendly, General-Purpose Corpus Query Interface", Proceeding of the LREC 2008 Workshop..Sustainability of Language Resources and Tools for Natural Language Processing, vol. 1, pp.27-32, 2008.
+[5] 
