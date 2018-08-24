@@ -5,9 +5,9 @@ source("D2T_Machine.R", local = TRUE)
 
 
 # READ DATA
-dataset <- as.data.frame(fread(file="Datasets/exc_2001.csv"))
-dataset <- as.data.frame(fread(file="Datasets/experiment.csv"))
 dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
+dataset <- as.data.frame(fread(file="Datasets/experiment2.csv"))
+dataset <- as.data.frame(fread(file="Datasets/exc_2001_2.csv"))
 colnames(dataset)[1] <- "DateTime"
 
 #
