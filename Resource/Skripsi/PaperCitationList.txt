@@ -4,15 +4,10 @@
 [4] J. Soehn et al, "Requirements of a User-Friendly, General-Purpose Corpus Query Interface", Proceeding of the LREC 2008 Workshop..Sustainability of Language Resources and Tools for Natural Language Processing, vol. 1, pp.27-32, 2008.
 [5] 
 
-[11] ANALYSIS OF LONG-TERM TEMPERATURE DATA USING  MANN-KENDALL TREND TEST AND LINEAR REGRESSION METHODS:  THE CASE OF THE SOUTHEASTERN ANATOLIA REGION 
- Atilgan ATILGA 
-Scientific Papers. Series A. Agronomy, Vol. LX, 2017
-[12]Knuth-Morris-Pratt algorithm: An analysis
-Mireille Regnier
- Mathematical Foundations of Computer Science 1989 pp 431-444
-[13]FORECASTINGUSINGSIMPLEEXPONENTIALSMOOTHINGMETHOD
-Eva OSTERTAGOV A, 
-Acta Electrotechnica et Informatica, Vol. 12, No. 3, 2012, 62–66
+[11]  A. ATILGA, "ANALYSIS OF LONG-TERM TEMPERATURE DATA USING  MANN-KENDALL TREND TEST AND LINEAR REGRESSION METHODS:  THE CASE OF THE SOUTHEASTERN ANATOLIA REGION", Scientific Papers. Series A. Agronomy, Vol. LX, 2017
+
+[12]M. Regnier, "Knuth-Morris-Pratt algorithm: An analysis", Mathematical Foundations of Computer Science, pp. 431-444,  1989.
+[13]E. Ostertagov, "A FORECASTING USING SIMPLE EXPONENTIAL SMOOTHING METHOD", Acta Electrotechnica et Informatica, Vol. 12, No. 3, pp.62–66, 2012.
 [14]
 [23] E. Reiter, "Building Natural-Language Generation Systems," pp. 91– 93, 1996
 [24] A. Belz, “Probabilistic Generation of Weather Forecast Texts,” Naacl-Hlt, no. April, pp. 164–171, 2007. 
