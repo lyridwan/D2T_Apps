@@ -1,0 +1,8 @@
+Data KURS
+http://www.kemendag.go.id/id/economic-profile/economic-indicators/exchange-rates
+
+UCR DATASET
+http://www.cs.ucr.edu/~eamonn/time_series_data/
+
+CENSUS
+http://new.censusatschool.org.nz/resource/time-series-data-sets-2012/
