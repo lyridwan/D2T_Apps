@@ -1213,7 +1213,8 @@ ResumeRepeatedAnalysis <- function(dataset){
   #values : int [1:26] 10 15 13 14 12 13 14 10 12 14 ...
   
   #limit
-  n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
+  # n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
+  n <- length(dataset) * 0.1
   
   repeatedSequence <- rep(lengthEncoding$lengths >= n, times=lengthEncoding$lengths)
   #Example repeatedSequence
@@ -1802,26 +1803,56 @@ PredictContent <- function(interpreterResult, vectorTrendDesc, dataset){
   return(mainSentence)
 }
 
-TrendAnalysis <- function(start,dataset){
+TrendAnalysis <- function(start,dataset, min, max){
 	# Dataset is vector, pokonamah ka gigir
   plot(as.numeric(unlist(dataset)), type="o", col="blue")
   dataset <- dataset[start:length(dataset)]
+  
   if(length(unique(dataset)) == 1){
   	result <- "0"
   }else{
 	  x = c(1:length(dataset))  
-	  
-	  # lines(sequence, dataset)
-
 	  reg = lm(dataset~x)
-	  if(reg$coefficients["x"] > 0 ){
-	    result <- "+"
-	  }else if(reg$coefficients["x"] < 0){
-	    result <- "-"
+	  
+	  #linear model range
+	  df <- reg$coefficients[2] + reg$coefficients[1]
+	  dl <- reg$coefficients[2]*length(dataset) + reg$coefficients[1]
+	  range <- dl-df
+	  
+	  print(df)
+	  print(dl)
+	  print(range)
+	  
+	  
+	  #stats
+	  stat <- 0
+	  if(range < 0){
+	    range <- range * (-1)
+	    stat <- 1
+	  }
+	  
+	  #dataset range
+	  rangeReal <- max-min
+	  
+	  print("----")
+	  print(min)
+	  print(max)
+	  print(rangeReal)
+	  print(0.05*rangeReal)
+	  #5% minimum tershold
+	  if(range > 0.05*rangeReal){
+	    if(stat == 0){
+	      result <- "+"
+	    }else{
+	      result <- "-"
+	    }
+	  }else{
+	    result <- "0"
 	  }
   
 	   # print(reg)
-	   # abline(reg,col="red")
+	   # plot(dataset)
+	   abline(reg,col="red")
   }
   
 

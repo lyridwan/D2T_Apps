@@ -1,0 +1,8 @@
+Default
+- B: 0pt, A: 6pt
+
+Header
+- B: 6pt, A: 6pt
+
+Caption
+- B: 0pt, A: 12pt

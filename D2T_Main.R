@@ -8,7 +8,7 @@ source("D2T_Machine.R", local = TRUE)
 # dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
 # dataset <- as.data.frame(fread(file="Datasets/experiment2.csv"))
 # dataset <- as.data.frame(fread(file="Datasets/exc_2001_2.csv"))
-dataset <- as.data.frame(fread(file="DatasetsExperiment/NilaiTukar#1.csv"))
+dataset <- as.data.frame(fread(file="DatasetsExperiment/Climatology#1.csv"))
 colnames(dataset)[1] <- "DateTime"
 
 #
@@ -48,7 +48,9 @@ i <- 1
 vectorTrendAnalysisResult <- c()
 for(i in i:length(datasetWithoutDate)){
   vectorColumn <- datasetWithoutDate[[i]]
-  vectorTrendAnalysisResult[i] <- TrendAnalysis(1, vectorColumn)
+  minValue <- as.numeric(as.character(statisticalResume$MinValue)[i])
+  maxValue <- as.numeric(as.character(statisticalResume$MaxValue)[i])
+  vectorTrendAnalysisResult[i] <- TrendAnalysis(1, vectorColumn, minValue, maxValue)
 }
 
 #merging main analysis DF with trend column
