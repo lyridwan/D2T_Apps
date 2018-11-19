@@ -392,7 +392,7 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
     n = nrow(corpus)
     node = (2*n)+n-1
     
-    minRange <- as.double(maxRange)/2*-1
+    minRange <- as.double(maxRange)/2 *-1
     maxRange <- as.double(maxRange)/2
     
     # cat(">>>> max min", maxRange, minRange)
@@ -453,9 +453,13 @@ TrendFuzzyGenerator <-function(type, statisticalResume){
   }
   
   #exception for first and last point
-  #listGeneralPartition[[1]][1] <- maxRange*-1
-  #listGeneralPartition[[length(listGeneralPartition)]][length(listGeneralPartition[[1]])] <- maxRange
+  print(maxRange)
+  print(listGeneralPartition[[1]][1])
+  listGeneralPartition[[1]][1] <- as.double(maxRange)*-2
+  listGeneralPartition[[length(listGeneralPartition)]][length(listGeneralPartition[[1]])] <- as.double(maxRange*2)
   
+  print(listGeneralPartition[[1]][1])
+  print(listGeneralPartition[[length(listGeneralPartition)]][length(listGeneralPartition[[1]])])
   
   v1 <-unlist(lapply(listGeneralPartition, `[[`, 1))
   v2 <-unlist(lapply(listGeneralPartition, `[[`, 2))
@@ -598,7 +602,7 @@ PlottingTrendFuzzy <- function(variables, name="Undefined"){
   i=1;
   for(i in i:n){
     y=as.matrix(c(1,6,6,1))
-    title <- paste(name," Membership Function")
+    title <- paste(name," Trend Membership Function")
     if(i==1){
       y[1,1] <-6
       plot(variables[[i]],y,type="l",lwd=1,main=title,xlim=c(maxX*-1,maxX),yaxt="n",col="red")
