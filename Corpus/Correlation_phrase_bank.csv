@@ -1,0 +1,5 @@
+posInc,posDec,negInc,negDec
+"As a result of the growth in @X, it can be seen that @Y is increasing.","As a result of the decay in @X, it can be seen that @Y is decreasing.","As a result of the growth in @X, it can be seen that @Y is decreasing.","As a result of the decay in @X, it can be seen that @Y is increasing."
+A rise in @X causes an attendant increase in @Y.,A fall in @X causes an attendant decrease in @Y.,A rise in @X causes a decrease in @Y.,A decline in @X causes an increase in @Y.
+An increase in @X resulted a growth in @Y.,A decrease in @X resulted a decline in @Y.,An increase in @X resulted a decay in @Y.,A decrease in @X resulted a growth in @Y.
+An increase in @X resulted an increase in @Y.,A decrease in @X resulted a decrease in @Y.,An increase in @X resulted a decrease in @Y.,A decrease in @X resulted an increase in @Y.

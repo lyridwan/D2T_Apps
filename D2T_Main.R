@@ -3,51 +3,68 @@ setwd("~/GitHub/D2T_Apps")
 # INITIALIZING
 source("D2T_Machine.R", local = TRUE)
 
-
-# READ DATA
-# dataset <- as.data.frame(fread(file="Datasets/dummy1.csv"))
-# dataset <- as.data.frame(fread(file="Datasets/experiment2.csv"))
-# dataset <- as.data.frame(fread(file="Datasets/exc_2001_2.csv"))
-dataset <- as.data.frame(fread(file="DatasetsExperiment/NilaiTukar#1.csv"))
+#-----------------------
+# GENERAL DATA HANDLER |
+#-----------------------
+# Force read, with default parameter v2,v3,v4,etc if there's no header available
+dataset <- as.data.frame(fread(file="DatasetsExperiment/Climatology#1.csv"))
 colnames(dataset)[1] <- "DateTime"
 
-#
+# Dataset with datetime Column dropped
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
 
-#
+# Parameter Header
 columnName <- colnames(datasetWithoutDate)
 
-#   
+#-----------------------
+#   PARAMETER CONFIG   |
+#-----------------------
 mainConfig <- ReadConfig()
 
-# airQualityDataset <- read.table(file="Datasets/AQ_2016_2017.csv", sep=",", header=TRUE)
+
+#-----------------------
+#   SPLITTING DATASET  | 1. Numerical Dataset
+#-----------------------
+# Listing all categorical parameter
+categoricalType <- c("categorical", "factors", "character")
+catColName <- mainConfig[mainConfig$Type %in% categoricalType, "ColName"]
+
+# Numerical Dataset initialization
+datasetNumerical <- dataset[, !names(dataset) %in% catColName]
+datasetNumericalWithoutDate <- datasetNumerical[ , colnames(datasetNumerical) != "DateTime"]
+columnNameNumerical <- colnames(datasetNumericalWithoutDate)
+
+#-----------------------
+#   SPLITTING DATASET  | 2. Categorical Dataset
+#-----------------------
+if(length(catColName) != 0){
+  if(length(catColName) == 1){
+    datasetCategoricalWithoutDate <- dataset[, catColName]
+    datasetCategorical <- cbind(dataset["DateTime"], datasetCategoricalWithoutDate)
+    colnames(datasetCategorical)[2] <- catColName
+  }else{
+    datasetCategoricalWithoutDate <- dataset[, colnames(dataset) %in% catColName]
+    datasetCategorical <- cbind(dataset["DateTime"], datasetCategorical)
+  }
+}
+
+#-----------------------
+#  DATE TIME INTERVAL  | 
+#-----------------------
+# Dataset Interval
 datasetIntervalValue <- DateInterval(dataset[2,"DateTime"], dataset[1,"DateTime"])
 
-# Predict
-datasetPredicted <- PredictDataset(dataset)
 
-
-# SYGNAL ANALYSIS
-
-# row [N] data, now
-datasetNow <- dataset[nrow(dataset), !colnames(dataset) == "DateTime"]
-
-# row[N-1] data, before now
-datasetLast <- dataset[nrow(dataset)-1, !colnames(dataset) == "DateTime"]
-
-# row[N-1] data, before now
-dataset2Last <- dataset[nrow(dataset)-2, !colnames(dataset) == "DateTime"]
-
-# Average Resume
-averageResume <- as.data.frame.list(colMeans(dataset[, !colnames(dataset) == "DateTime"]))
+# SYGNAL ANALYSIS: 1.Data Summarizing
+# -------------Begin------------- 
 
 # Statistical Resume
-statisticalResume <- StatisticalAnalysis(dataset)
+statisticalResume <- StatisticalAnalysis(datasetNumerical)
 
 i <- 1
 vectorTrendAnalysisResult <- c()
-for(i in i:length(datasetWithoutDate)){
-  vectorColumn <- datasetWithoutDate[[i]]
+for(i in i:length(datasetNumericalWithoutDate)){
+  vectorColumn <- datasetNumericalWithoutDate[[i]]
   minValue <- as.numeric(as.character(statisticalResume$MinValue)[i])
   maxValue <- as.numeric(as.character(statisticalResume$MaxValue)[i])
   vectorTrendAnalysisResult[i] <- TrendAnalysis(1, vectorColumn, minValue, maxValue)
@@ -56,96 +73,88 @@ for(i in i:length(datasetWithoutDate)){
 #merging main analysis DF with trend column
 statisticalResume$Trend <- vectorTrendAnalysisResult
 
+# ------------End------------ 
 
-#Repeated value analysis
+
+# SYGNAL ANALYSIS: 2.Extreme Event
+# ------------Begin------------ 
+
+dfExtremeGrowth <- ResumeEventExtreme(datasetNumericalWithoutDate, statisticalResume, "Growth")
+dfExtremeDecay <- ResumeEventExtreme(datasetNumericalWithoutDate, statisticalResume, "Decay")
+
+dfExtremeEvent <- cbind(columnNameNumerical, dfExtremeGrowth, dfExtremeDecay)
+# ------------End------------ 
+
+# SYGNAL ANALYSIS: 3.Repeated Event
+# ------------Begin------------ 
+
+# Function: ResumeRepeatedAnalysis()
+# Purpose: Analyzing Repeated Event 
+# Result variable: listRepeatedAnalysisResult
+
 i <- 1
 listRepeatedAnalysisResult <- list()
-vectorRepValueResult <- c()
 for(i in i:length(datasetWithoutDate)){
   vectorColumn <- datasetWithoutDate[[i]]
   listRepeatedAnalysisResult[[i]] <- ResumeRepeatedAnalysis(vectorColumn)
-  vectorRepValueResult[i] <- listRepeatedAnalysisResult[[i]]$RepValue
 }
+# ------------End------------ 
 
-#highsest growth analysis
-i <- 1
-vectorHighestGrowthAnalysisResult <- c()
-vectorInterpreterRes <- list()
-vectorInterpreterIndex <- c()
-vectorStartIndex <- c()
-vectorEndIndex <- c()
-vectorGrowth <- c()
-for(i in i:length(datasetWithoutDate)){
-  listColumn <- datasetWithoutDate[[i]]
-  listHighestGrowthAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Growth")
-  
-  vectorGrowth[i] <-listHighestGrowthAnalysisResult$valueResult
-  vectorStartIndex[i] <-listHighestGrowthAnalysisResult$startIndexResult
-  vectorEndIndex[i] <-listHighestGrowthAnalysisResult$endIndexResult
-  
-  #vectorInterpreterRes[[i]] <- MembershipFuzzy(vectorGrowth, TrendFuzzyGenerator(columnName[i], statisticalResume))
-  vectorInterpreterIndex[i] <- MembershipFuzzy(vectorGrowth[i], TrendFuzzyGenerator(columnName[i], statisticalResume))$InterpreterIndex
-  
-}
-#exception
-vectorEndIndex <- vectorEndIndex + 1
+# SYGNAL ANALYSIS: 4.Predicting
+# ------------Begin------------ 
 
-#Combine all process into df
-dfHighestGrowth <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
-dfHighestGrowth$type <- mainConfig$Type
-highestInterpreterIndex <- max(vectorInterpreterIndex)
+datasetPredicted <- PredictDataset(datasetNumerical)
+# ------------End------------ 
 
-dfHighestGrowth <- dfHighestGrowth[dfHighestGrowth$vectorInterpreterIndex == 5 ,]
-dfHighestGrowth <- dfHighestGrowth[dfHighestGrowth$type == "numeric" ,]
-dfHighestGrowth$colName <- columnName[as.numeric(rownames(dfHighestGrowth))]
+# SYGNAL ANALYSIS: 5.Motif Discovery
+# ------------Begin------------ 
+
+MDinterpreterResult <- MotifDiscoveryInterpreter(datasetWithoutDate, datasetIntervalValue)
+# ------------End------------ 
 
 
-vectorSentenceHighestGrowth <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfHighestGrowth, type = "Growth")
+# SYGNAL ANALYSIS: 6.Correlation
+# ------------Begin------------ 
 
-#highsest Decay analysis
-i <- 1
-for(i in i:length(datasetWithoutDate)){
-  listColumn <- datasetWithoutDate[[i]]
-  listHighestGrowthAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Decay")
-  
-  vectorGrowth[i] <-listHighestGrowthAnalysisResult$valueResult
-  vectorStartIndex[i] <-listHighestGrowthAnalysisResult$startIndexResult
-  vectorEndIndex[i] <-listHighestGrowthAnalysisResult$endIndexResult
-  
-  #vectorInterpreterRes[[i]] <- MembershipFuzzy(vectorGrowth, TrendFuzzyGenerator(columnName[i], statisticalResume))
-  vectorInterpreterIndex[i] <- MembershipFuzzy(vectorGrowth[i], TrendFuzzyGenerator(columnName[i], statisticalResume))$InterpreterIndex
-  
-}
-
-#exception
-vectorEndIndex <- vectorEndIndex + 1
-
-#Combine all process into df
-dfHighestDecay <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreterIndex)
-dfHighestDecay$type <- mainConfig$Type
-highestInterpreterIndex <- min(vectorInterpreterIndex)
-
-dfHighestDecay <- dfHighestDecay[dfHighestDecay$vectorInterpreterIndex == 1,]
-dfHighestDecay <- dfHighestDecay[dfHighestDecay$type == "numeric" ,]
-dfHighestDecay$colName <- columnName[as.numeric(rownames(dfHighestDecay))]
-
-vectorSentenceHighestDecay <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfHighestDecay, type = "Decay")
+correlationResult <- CorrelationAnalysis(datasetNumericalWithoutDate)
+# ------------End------------ 
 
 
 
 
 
-# DATA INTERPRETATION
+
+
+# DATA INTERPRETATION: 0.Preparation
+# ------------Begin------------ 
+# row [N] data, now
+datasetNow <- datasetNumerical[nrow(datasetNumerical), !colnames(datasetNumerical) == "DateTime"]
+
+# row[N-1] data, before now
+datasetLast <- datasetNumerical[nrow(datasetNumerical)-1, !colnames(datasetNumerical) == "DateTime"]
+
+# row[N-2] data, before now
+dataset2Last <- datasetNumerical[nrow(datasetNumerical)-2, !colnames(datasetNumerical) == "DateTime"]
+
+# Average Resume
+averageResume <- as.data.frame.list(colMeans(datasetNumerical[, !colnames(datasetNumerical) == "DateTime"]))
+# ------------End------------ 
+
+
+# DATA INTERPRETATION: 1. Inpterpretating data
+# ------------Begin------------ 
+
 interpreterNow <- DataInterpreter(datasetNow,statisticalResume)
 interpreterLast <- DataInterpreter(datasetLast,statisticalResume)
 interpreter2Last <- DataInterpreter(dataset2Last, statisticalResume)
 interpreterResume <- DataInterpreter(averageResume,statisticalResume)
 interpreterPredict <- DataInterpreter(datasetPredicted,statisticalResume)
+# ------------End------------
 
 # RESUME LEXICAL PROCESS
 i <- 1
 vectorTrendDescriptionAnalysis <- c()
-for(i in i:length(datasetWithoutDate)){
+for(i in i:length(datasetNumericalWithoutDate)){
   last2Index <- interpreter2Last$InterpreterIndex[i]
   lastIndex <- interpreterLast$InterpreterIndex[i]
   nowIndex <- interpreterNow$InterpreterIndex[i]
@@ -156,58 +165,27 @@ for(i in i:length(datasetWithoutDate)){
 }
 
 
-i <- 1
-maxValue <- 0
-maxIndex <- 0
-for(i in i:length(listRepeatedAnalysisResult)){
-  if(listRepeatedAnalysisResult[[i]]$RepValue > maxValue){
-    maxValue <- listRepeatedAnalysisResult[[i]]$RepValue
-    maxIndex <- i
-  }
-}
 
-
-if(maxValue != 0){
-  i <- 1
-  vectorRepeatedInterpretResult <- c()
-  selectedColumn <- columnName[maxIndex]
-  for(i in i:length(listRepeatedAnalysisResult[[maxIndex]]$Start)){
-    selectedIndex <-listRepeatedAnalysisResult[[maxIndex]]$Start[i]
-    selectedValue <- datasetWithoutDate[[selectedColumn]][selectedIndex]
-    # print(selectedValue)
-    
-    vectorRepeatedInterpretResult[[i]] <- DataInterpreterAdjective(selectedValue, selectedColumn, statisticalResume)$InterpreterResult
-  }
-}
 
 
 resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName)
 trendIntro <- ReadIntro(type="Trend")
 resumeTrend <- paste0(trendIntro," ",ResumeTrend(statisticalResume))
+resumeRepeated <- RepeatedEventDocPlanning(listRepeatedAnalysisResult)
 
-resumeRepeatedLimit <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
-resumeRepeatedInterval <- paste0(DataInterpreterInterval(datasetIntervalValue, type = "default"), "s")
-if(maxValue != 0){
-  resumeRepeated <- ResumeRepeated2(columnName[[maxIndex]], dataset, vectorRepeatedInterpretResult, listRepeatedAnalysisResult[[maxIndex]]$Start, listRepeatedAnalysisResult[[maxIndex]]$End)
-  resumeRepeated <- paste("There were some repeating value more than @limit @interval: ", resumeRepeated)
-  }else{
-  resumeRepeated <- "There were no repeating values within @limit @interval or more, every value changed from time to time."
-  }
-
-resumeRepeated <- gsub("@limit", resumeRepeatedLimit, resumeRepeated)
-resumeRepeated <- gsub("@interval", resumeRepeatedInterval, resumeRepeated)
-
-# MotifDiscoveryAnalys
-# 
-# resumeMotifDisc <- 
-
-
-resumeHighestGrowth <- AggResumeGrowth(vectorSentenceHighestGrowth, vectorSentenceHighestDecay)
-resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeHighestGrowth)
-
-MDinterpreterResult <- MotifDiscoveryInterpreter(datasetWithoutDate, datasetIntervalValue)
 MDdocPlanResult <- MotifDiscoveryDocPlan(MDinterpreterResult)
-MotifDiscoveryMicroPlan(MDdocPlanResult, MDinterpreterResult)
+resumeMotifDiscovery <- MotifDiscoveryMicroPlan(MDdocPlanResult, MDinterpreterResult)
+
+resumeCorrelationRoutine <- CorrelationRoutineMessage(correlationResult)
+resumeCorrelationSignificant <- CorrelationSignificantMessage(correlationResult)
+resumeCorrelation <- paste(resumeCorrelationRoutine, resumeCorrelationSignificant)
+
+resumeExtremeEvent <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfExtremeEvent)
+resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeExtremeEvent, resumeMotifDiscovery, resumeCorrelation)
+
+
+
+
 # 
 currentIntro <- ReadCurrentIntro(dataset[nrow(dataset),"DateTime"])
 currentDesc <- CurrentDesc(interpreterNow, vectorTrendDescriptionAnalysis, datasetWithoutDate)
@@ -217,7 +195,7 @@ currentResult <- paste(currentIntro, currentDesc)
 # PREDICT LEXICAL PROCESS
 i <- 1
 vectorTrendDescriptionPredict <- c()
-for(i in i:length(datasetWithoutDate)){
+for(i in i:length(datasetNumericalWithoutDate)){
   lastIndex <- interpreterLast$InterpreterIndex[i]
   nowIndex <- interpreterNow$InterpreterIndex[i]
   predictIndex <- interpreterPredict$InterpreterIndex[i]
@@ -232,7 +210,7 @@ for(i in i:length(datasetWithoutDate)){
 
 predictIntro <- ReadPredictIntro(ReadIntro(type="Predict"))
 
-specialCorpus <- IsSpecialCorpusAvailable(interpreterPredict, columnName)
+specialCorpus <- IsSpecialCorpusAvailable(interpreterPredict, columnNameNumerical)
 if(!is.null(specialCorpus$Sentence)){
   predictIntro <- paste(predictIntro, specialCorpus$Sentence)
 }
@@ -242,9 +220,9 @@ predictResult <- paste(predictIntro, predictContent)
 
 
 
-resumeResult <- PostProcessing(resumeResult)
-currentResult <- PostProcessing(currentResult)
-predictResult <- PostProcessing(predictResult)
+# resumeResult <- PostProcessing(resumeResult)
+# currentResult <- PostProcessing(currentResult)
+# predictResult <- PostProcessing(predictResult)
 
 resumeResult
 currentResult

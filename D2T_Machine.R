@@ -77,20 +77,25 @@ ClassHeaderChecker <- function(dataset){
 
 
 ReadConfig <- function (){
+  #Initializing
   nullSequence <- rep(NA, length(columnName))
   dfResult <- data.frame(ColName = columnName, Type = nullSequence, Rule = nullSequence, Alternate=nullSequence, stringsAsFactors=FALSE)
   
+  # Read config from file
   mainConfig <- read.table("Config/mainconfig.csv", header=TRUE, sep=",")
   
-  #Merging Process with setting from file
+  # Load setting from default file
   i<-1
   for(i in i:nrow(mainConfig)){
     tempColumn <- as.character(unlist(mainConfig$ColName[i]))
     dfResult[dfResult$ColName == tempColumn,] <- as.vector(unlist(mainConfig[mainConfig$ColName == tempColumn,]))
   }
   
+  # Checking variable type with typeof()
   headerClass <- ClassHeaderChecker(dataset)
   headerClass <- headerClass[names(headerClass)!="DateTime"]
+  
+  # Merging R config with Default config
   i<-1
   for(i in i:length(headerClass)){
     tempColumn <- names(headerClass)[i]
@@ -103,21 +108,26 @@ ReadConfig <- function (){
   return(dfResult)
 }
 
-PredictDataset<-function(dataset, format="%m/%d/%Y %H:%M"){
+PredictDataset<-function(dataset, format="%m/%d/%Y %H:%S"){
   result <- c()
   lengthWithoutDate <-  length(dataset[,-which(colnames(dataset) == "DateTime")])
   
-  dataSeries <- xts(dataset[,-which(colnames(dataset) == "DateTime")], order.by=as.Date(dataset[,"DateTime"], format))
-  
+  dataSeries <- xts(dataset[,-which(colnames(dataset) == "DateTime")], order.by=strptime(dataset[,"DateTime"], format))
+  print(head(dataSeries))
   i<-1
   for(i in i:lengthWithoutDate){
-    result[i] <- forecast(dataSeries[,i], h=1)$mean
+    if(length(unique(dataSeries[,i])) != 1){
+      print("NAS")
+      result[i] <- forecast(dataSeries[,i], h=1)$mean
+    }else{
+      
+      result[i] <- dataSeries[1,i]
+    }
+    
   }
-  
   
   names(result) <- colnames(dataset[ , colnames(dataset) != "DateTime"])
   
-  # print(result)
   return(result)
 }
 
@@ -339,7 +349,7 @@ MembershipFuzzy <- function(value, corpus){
     v3<-corpus[i, "v3"];
     v4<-corpus[i, "v4"];
     
-    ##/ Â¯ \ <- 1st area, 2nd area, 3rd area
+    ##/ ¯ \ <- 1st area, 2nd area, 3rd area
     #first area
     if((value>=v1)&&(value<=v2)){
       membershipValue[i] <- (  (value-v1) / (v2-v1)  );
@@ -353,8 +363,14 @@ MembershipFuzzy <- function(value, corpus){
     }else{
       membershipValue[i] <- 0;
     }
+    
+    
+    if(is.nan(as.numeric(membershipValue[i]))){
+      membershipValue[i] <- 9999
+    }
   }
   
+  print(membershipValue)
   #check highest membership result
   interpreterResult <- corpus[which.max(membershipValue), "Category"]
   interpreterIndex <- which(interpreterResult == corpus$Category)
@@ -647,6 +663,42 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume=NUL
   return(result)
 }
 
+AQDataInterpreterAdjective <- function(value, type="AirQuality"){
+  
+  AQparam <- c("CO","NO","NO2","NOX","O3","PM10","PM25","SO2")
+  boolCase <- AQparam %in% mainConfig$ColName
+  if(sum(boolCase == "FALSE") == 0){
+    mainConfig <- rbind(mainConfig, c("AirQuality", "numeric", "range", NA))
+  }
+  
+  if(!is.na(mainConfig[mainConfig$ColName == type,]$Rule)){
+    if(mainConfig[mainConfig$ColName == type,]$Rule == "fuzzy"){
+      corpus <- read.table(file=paste0("Corpus/Fuzzy/",type,"Adjective.csv"), sep=",", header=TRUE)
+      if(type == "Rainfall" && value == 0){
+        result <- list(InterpreterResult = as.character("no rain"), InterpreterIndex = 0)
+      }else{
+        result <- MembershipFuzzy(value, corpus);
+      }
+    }else{
+      corpus <- read.table(file=paste0("Corpus/Range/",type,"Adjective.csv"), sep=",", header=TRUE)
+      result <- MembershipClassifier(value, corpus);
+    }
+  }else{
+    corpus <- GeneralFuzzyGenerator(type, statisticalResume)
+    result <- MembershipFuzzy(value, corpus);
+  }
+  
+  # print(result)
+  return(result)
+}
+
+CorrelationInterpreterAdjective <- function(value){
+  corpus <- read.table(file=paste0("Corpus/Range/CorrelationAdjective.csv"), sep=",", header=TRUE)
+  result <- MembershipClassifier(value, corpus);
+  
+  return(result)
+}
+
 DataInterpreter <- function(dataset,statisticalResume){
   i <- 1;
   n <- length(dataset);
@@ -936,7 +988,7 @@ ResumeTrend <- function(statisticalResume){
           }
         }
         
-        result <- paste(result, "trend is decreased and the rest is constant.")
+        result <- paste(result, "trend is decreased and the rest is almost constant.")
       }else{
         #1ST GROUP
         listTrend <- statisticalResume[statisticalResume$Trend == "+", ]
@@ -1422,14 +1474,16 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
   # print(interpreterResult)
   #During 6-21 Jul 2016, 13-20 Mar 2017, 2-24 Apr 2017, 14-21 Jun 2017 Rainfall stayed constant at 0 (no rain)
   if(length(interpreterResult) == 1){
-    dateStart <- dataset[["DateTime"]][vectorStart[i]]
-    dateEnd <- dataset[["DateTime"]][vectorEnd[i]]
+    dateStart <- dataset[["DateTime"]][vectorStart[1]]
+    dateEnd <- dataset[["DateTime"]][vectorEnd[1]]
     
     dateRange <- LexicalDateRange(dateStart,dateEnd)
     
-    subSentence <- paste(dateRange, colName, "stayed constant at", dataset[[colName]][vectorStart[i]])
-    subSentence <- paste0(subSentence, " (", interpreterResult[i],  ")")
-    mainSentence <- paste0("During ", subSentence,".")
+    subSentence <- paste(colName, "stayed constant at", interpreterResult[1])
+    subSentence <- paste0(subSentence, 
+                          # " (", dataset[[colName]][vectorStart[i]],  " point)",
+                          " during ", dateRange)
+    mainSentence <- paste0(subSentence,".")
   }else if(length(interpreterResult) != 0){
     mainSentence<-""
     
@@ -1469,9 +1523,10 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
       
       # cat(reps, "\n")
       
-      subSentence <- paste(subSentence, colName, "stayed constant at", dataset[[colName]][vectorStart[i]])
-      subSentence <- paste0(subSentence, " (", interpreterResult[i],  ")")
-      mainSentence <- paste0(mainSentence, "During ", subSentence,".")
+      subSentence <- paste0(colName, " stayed constant at ", interpreterResult[i], 
+                           # " (", dataset[[colName]][vectorStart[i]],  " point) ",
+                           " during ", subSentence)
+      mainSentence <- paste0(mainSentence, subSentence,".")
       i <- i + 1
     }
     
@@ -1484,8 +1539,6 @@ ResumeRepeated2 <- function (colName, dataset, interpreterResult, vectorStart, v
 LexicalDateRange  <- function(dateStart, dateEnd){
   #FORMAT: mm/dd/yyyy -> "07/01/2018"
   
-  # print(dateStart)
-  # print(dateEnd)
   startMonth <- as.numeric(substr(dateStart,1,2))
   endMonth <- as.numeric(substr(dateEnd,1,2))
   
@@ -1494,6 +1547,13 @@ LexicalDateRange  <- function(dateStart, dateEnd){
   
   startYear <- as.numeric(substr(dateStart,7,10))
   endYear <- as.numeric(substr(dateEnd,7,10))
+  
+  #Example: 1 June 2018 00:00 to 12:00
+  if(datasetIntervalValue == 1){
+    result <- paste0(startDate, " ", month.abb[startMonth], " ", startYear, " ", SubstrRight(dateStart,5), 
+                     " to ", endDate, " ", month.abb[endMonth], " ", endYear, " ", SubstrRight(dateEnd,5))
+    return(result)
+  }
   
   timeRepeated <- ""
   if(startYear == endYear){
@@ -1549,7 +1609,7 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
           #second itter
           while(j <= length(vectorTrendDesc)){
             if(length(reps[reps == 0]) != 0){
-              if(interpreterResult$InterpreterResult[i] == interpreterResult$InterpreterResult[j] && vectorTrendDesc[i] == vectorTrendDesc[j]){
+              if(interpreterResult$InterpreterResult[i] == interpreterResult$InterpreterResult[j]){
                 #mark the index as checked
                 reps[j] <- j
                 
@@ -1559,7 +1619,7 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
                 #TRUE FALSE
                 #0    0
                 indicator <- c("TRUE"=0, "FALSE"=0)
-                isGroupingAvailable <- (interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i]) & vectorTrendDesc[j:length(vectorTrendDesc)] == vectorTrendDesc[i]
+                isGroupingAvailable <- (interpreterResult$InterpreterResult[j:length(interpreterResult$InterpreterResult)] == interpreterResult$InterpreterResult[i])
                 isGroupingAvailable <- table(isGroupingAvailable)
                 
                 #handling if table dont have FALSE or TRUE value, then use default value (0)
@@ -1593,16 +1653,15 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
           }
         }
         
+        
         #after groping the column
         interpreter <- interpreterResult$InterpreterResult[i]
         if(interpreter == "Constant"){
           phrase <- change_word_bank_AQ2()
           interpreter = "from the first time"
-        }else{
-          phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
         }
         
-        subSentence <- paste(subSentence, phrase, interpreter)
+        subSentence <- paste(subSentence, "in", interpreter, "condition")
         mainSentence <- paste0(mainSentence, subSentence,". ")
       }
       # cat("reps:", i, " ",reps,"\n")
@@ -1704,7 +1763,7 @@ PredictDesc <- function(interpreterResult, vectorTrendDesc, dataset){
           phrase <- change_word_bank_AQ2()
           interpreter = "from the first time"
         }else{
-          phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
+          phrase <- change_word_bank_AQ(vectorTrendDesc[i])
         }
         
         subSentence <- paste(subSentence, "will", phrase, interpreter)
@@ -1790,7 +1849,7 @@ PredictContent <- function(interpreterResult, vectorTrendDesc, dataset){
           }
         }
         
-        #after groping the column
+        #after grouping the column
         interpreter <- interpreterResult$InterpreterResult[i]
         phrase <- change_word_bank_AQ(vectorTrendDescriptionAnalysis[i])
         
@@ -1930,8 +1989,12 @@ change_word_bank_AQ <- function (fragmentCode){
   }
 }
 
-change_word_bank_AQ2 <- function (){
-  phrase <- as.matrix(read.table("Corpus/AQ_phrase_bank2.csv", header=FALSE, sep=';', quote=""))
+change_word_bank_AQ2 <- function (type="default"){
+  if(type == "highest"){
+    phrase <- as.matrix(read.table("Corpus/Highest_phrase_bank.csv", header=FALSE, sep=';', quote=""))
+  }else{
+    phrase <- as.matrix(read.table("Corpus/AQ_phrase_bank2.csv", header=FALSE, sep=';', quote=""))
+  }
   # print(corpus)
   n <- length(phrase)
   random_value <- as.integer(runif(1,1,n+0.5))
@@ -1952,34 +2015,81 @@ change_word_bank_AQ3 <- function (fragmentCode){
   }
 }
 
-DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){
+change_word_bank_Cor <- function (fragmentCode){
+  phraseAQ <- read.table(file="corpus/Correlation_phrase_bank.csv", sep=",", header=TRUE)
+  n=length(phraseAQ); i=1; 
+  for(i in i:n){
+    m=colnames(phraseAQ[i])
+    if(fragmentCode==m){
+      j=runif(1,1,n+1)
+      return(as.character(phraseAQ[j,i]))
+    }
+  }
+}
+
+DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth){
   if(length(dfGrowth) != 0){
-    result <- c()
+    flResult <- c()
+    incResult <- c()
+    decResult <- c()
     #JPY increased greatly (4.3530 point) from 1st Aug to 1st Oct 2008
     
-    i<-1
+    i <- flIndex <- incIndex <- decIndex <-1
     for(i in i:nrow(dfGrowth)){
       # index <- rownames(dfGrowth)[i]
       
+      
       sentence <- ""
-      if(type == "Growth"){
-        phrase <- "increased greatly"
-      }else if(type == "Decay"){
-        phrase <- "decreased greatly"
+      if(dfGrowth$IncInterpreter[i] == "extreme" && dfGrowth$DecInterpreter[i] == "extreme"){
+        event <- "fluctuated"
+        adverb <- "significantly"
+        phrase <- paste(event, adverb)
+        
+        # sentence <- paste0(dfGrowth$columnNameNumerical[i], " ", 
+        #                    phrase, " (increased ", dfGrowth$IncValue[i]," points",
+        #                    " from ", incdateRange,
+        #                    " and decreased ", abs(dfGrowth$DecValue[i])," points",
+        #                    " from ", decdateRange,")")
+        
+        sentence <- paste0(dfGrowth$columnNameNumerical[i], " ", 
+                           phrase, " (increased ", dfGrowth$IncValue[i]," points ",
+                           "and decreased ", abs(dfGrowth$DecValue[i])," points)")
+        
+        flResult[flIndex] <- as.character(sentence)
+        flIndex <- flIndex  +1
+      }else if(dfGrowth$IncInterpreter[i] == "extreme"){
+        event <- "increased"
+        adverb <- "significantly"
+        phrase <- paste(event, adverb)
+        
+        dateRange <- LexicalDateRange(as.character(dateTime[dfGrowth$IncStartIndex[i]]), 
+                                      as.character(dateTime[dfGrowth$IncEndIndex[i]]))
+        
+        sentence <- paste0(dfGrowth$columnNameNumerical[i], " ", 
+                           phrase, " from ", dateRange, " ",
+                           "(increased ", dfGrowth$IncValue[i]," points)" ) 
+        
+        incResult[incIndex] <- as.character(sentence)
+        incIndex <- incIndex  +1
+      }else if(dfGrowth$DecInterpreter[i] == "extreme"){
+        event <- "decreased"
+        adverb <- "significantly"
+        phrase <- paste(event, adverb)
+        
+        dateRange <- LexicalDateRange(as.character(dateTime[dfGrowth$DecStartIndex[i]]), 
+                                      as.character(dateTime[dfGrowth$DecEndIndex[i]]))
+        
+        sentence <- paste0(dfGrowth$columnNameNumerical[i], " ", 
+                           phrase, " from ", dateRange, " ",
+                           "(decreased ", abs(dfGrowth$DecValue[i])," points)" )
+        
+        decResult[decIndex] <- as.character(sentence)
+        decIndex <- decIndex  +1
       }
-      # print(dfGrowth$vectorStartIndex[1])
-      # print(dfGrowth$vectorEndIndex[1])
-      # 
-      # print(as.character(dateTime[dfGrowth$vectorStartIndex[i]]))
-      # print(as.character(dateTime[dfGrowth$vectorEndIndex[i]]))
       
-      dateRange <- LexicalDateRange(as.character(dateTime[dfGrowth$vectorStartIndex[i]]), as.character(dateTime[dfGrowth$vectorEndIndex[i]]))
-      # print(dateRange)
-      
-      sentence <- paste0(dfGrowth$colName[i], " ", phrase, " (", dfGrowth$vectorGrowth[i]," points) from ", dateRange)
-      
-      result[i] <- as.character(sentence)
     }
+    
+    result <- AggResumeGrowth(incResult, decResult, flResult)
   }else{
     result <- ""
   }
@@ -1987,14 +2097,16 @@ DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth, type){
   return(result)
 }
 
-AggResumeGrowth <- function(vectorGrowth, vectorDecay){
+AggResumeGrowth <- function(vectorGrowth, vectorDecay, vectorFluctuate){
   i<-1
   
   sentence1 <- ""
   if(length(vectorGrowth) != 0){
     for(i in i:length(vectorGrowth)){
-      if(i == length(vectorGrowth) && i != 1){
-        sentence1 <- paste0(sentence1, " and ", vectorGrowth[i], ".")
+      if(length(vectorGrowth) == 1){
+        sentence2 <- paste0(sentence1, vectorGrowth[i], ".")
+      }else if(i == length(vectorGrowth) && i != 1){
+        sentence1 <- paste0(sentence1, "and ", vectorGrowth[i], ".")
       }else{
         sentence1 <- paste0(sentence1, vectorGrowth[i], ", ")
       }
@@ -2003,10 +2115,11 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
   
   sentence2 <- ""
   if(length(vectorDecay) != 0){
-    sentence2 <- "While "
     i<-1
     for(i in i:length(vectorDecay)){
-      if(i == length(vectorDecay) && i !=1){
+      if(length(vectorDecay) == 1){
+        sentence2 <- paste0(sentence2, vectorDecay[i], ".")
+      }else if(i == length(vectorDecay) && i !=1){
         sentence2 <- paste0(sentence2, "and ", vectorDecay[i], ".")
       }else{
         sentence2 <- paste0(sentence2, vectorDecay[i], ", ")
@@ -2014,7 +2127,21 @@ AggResumeGrowth <- function(vectorGrowth, vectorDecay){
     }
   }
   
-  result <- paste0(sentence1, sentence2)
+  sentence3 <- ""
+  if(length(vectorFluctuate) != 0){
+    i<-1
+    for(i in i:length(vectorFluctuate)){
+      if(length(vectorFluctuate) == 1){
+        sentence2 <- paste0(sentence3, vectorFluctuate[i], ".")
+      }else if(i == length(vectorFluctuate) && i !=1){
+        sentence3 <- paste0(sentence3, "and ", vectorFluctuate[i], ".")
+      }else{
+        sentence3 <- paste0(sentence3, vectorFluctuate[i], ", ")
+      }
+    }
+  }
+  
+  result <- paste(sentence1, sentence2, sentence3)
   return(result)
 }
 
@@ -2075,7 +2202,7 @@ KMP <- function(string, pattern){
 }
 
 MotifDiscoveryAnalysis <- function(colName, dataset, datasetIntervalValue){
-  print(dataset)
+  
   n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
   index <- length(dataset)+1 - n
   
@@ -2084,9 +2211,6 @@ MotifDiscoveryAnalysis <- function(colName, dataset, datasetIntervalValue){
   
   #dataest
   dataset <- dataset[1:index]
-  print(dataset)
-  print(pattern)
-  # print(length(pattern))
   
   result <- list()
   if(!is.null(KMP(dataset, pattern))){
@@ -2113,7 +2237,7 @@ MotifDiscoveryInterpreter <- function(dataset, datasetIntervalValue){
 }
 
 MotifDiscoveryDocPlan <- function(listMD){
-  listCategorical <- mainConfig[which(mainConfig$Type == ("integer") | mainConfig$Type == ("categorical")),]
+  listCategorical <- mainConfig[which(mainConfig$Type == ("character") | mainConfig$Type == ("categorical")| mainConfig$Type == ("factor")),]
   
   
   if(nrow(listCategorical) != 0){
@@ -2162,7 +2286,7 @@ MotifDiscoveryMicroPlan <- function(listColumn, listMD){
   if(sum(!is.na(listColumn)) == 0){
     verb <- MotifDiscoveryRE()
     MDintro <- paste0("For the past ", limit, " ", interval, " ,")
-    MDcontent <- paste("no", verb, "patterns were found for each categorical/integer parameters.")
+    MDcontent <- paste("no", verb, "patterns were found for each categorical parameters.")
     
     MDsentence <- paste(MDintro, MDcontent)
     return(MDsentence)
@@ -2294,20 +2418,20 @@ MissingValueHandling <- function(dataset){
   md.pattern(dataset)
   
   #using linear regression
-  model <- mice(dataset,maxit=50,seed=500, meth="norm")
+  model <- mice(dataset,m=5, maxit=50,seed=500, method="pmm")
   result <- complete(model)  # generate the completed data.
   
   return(result)
 }
 
-IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
+IsSpecialCorpusAvailable <- function(interpreterPredict, column){
   case1 <- c("Rainfall","CloudCoverage")
   case2 <- c("Temperature")
   case3 <- c("CO","NO","NO2","NOX","O3","PM10","PM25","SO2")
   
   boolcase1 <- case1 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
   boolcase2 <- case2 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
-  boolcase3 <- case3 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
+  boolcase3 <- case3 %in% mainConfig$ColName
   
   result <- NULL
   vectorResult <- NULL
@@ -2329,7 +2453,7 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
   
   #CASE 2: (TEMPERATURE SENTENCE)
   if(sum(boolcase2 == "FALSE") == 0){
-    #get all value when list$colname value == temperature
+    #get all value when list$column value == temperature
     temperatureState <- lapply(interpreterPredict,`[[`, which(interpreterPredict$Colname == "Temperature"))$InterpreterResult
     
     temperatureIntro <- ReadIntro(type = "Temperature")
@@ -2343,31 +2467,28 @@ IsSpecialCorpusAvailable <- function(interpreterPredict, colName){
   
   #CASE3: (AIR QUALITY SENTENCE)  
   if(sum(boolcase3 == "FALSE") == 0){
-    AQdataLast <- datas[-1,case3]
-    AQdatanow <- datas[nrow(datas),case3]
-    AQdataPredict <- PredictDataset(datas, "%d/%m/%Y")
-    
+
+    AQdataLast <- dataset[nrow(dataset)-1,case3]
+    AQdatanow <- dataset[nrow(dataset),case3]
+    AQdataPredict <- PredictDataset(dataset)
+
     AQvalLast <- AirQualityCalculation(AQdataLast)
     AQvalnow <- AirQualityCalculation(AQdatanow)
     AQvalPredict <- AirQualityCalculation(AQdataPredict)
-    
-    AQInterpreterLast <- DataInterpreterAdjective(AQvalLast, type="AirQuality")$InterpreterIndex
-    AQInterpreterNow <- DataInterpreterAdjective(AQvalnow, type="AirQuality")$InterpreterIndex
-    AQInterpreterPredict <- DataInterpreterAdjective(AQvalPredict, type="AirQuality")$InterpreterIndex
-    
+    #need to be updated
     AQsequence <- LD_Compare(c(AQvalLast, AQvalnow, AQvalPredict))
-  
-    AQintro <- ReadIntro(type="AirQuality")
+
+    AQintro <- "air quality will"
     AQtrendDesc <- change_word_bank_AQ(AQsequence)
-    AQstate<- DataInterpreterAdjective(AQvalPredict, type="AirQuality")$InterpreterResult
-    
-    AQsentence <- paste(AQintro, AQtrendDesc, AQstate)
-    
-    result <- paste(result, AQsentence)
+    AQstate<- AQDataInterpreterAdjective(AQvalPredict)$InterpreterResult
+
+    AQsentence <- paste(AQintro, AQtrendDesc, AQstate, ".")
+
+    result <- paste0(result, AQsentence)
     vectorResult <- c(vectorResult, case3)
   }
   
-  # print(result)
+  print(mainConfig)
   # print(vectorResult)
   return(list(Sentence = result, VectorResult = vectorResult))
 }
@@ -2438,4 +2559,342 @@ PostProcessing <- function(corpus){
   }
   
   return(corpus)
+}
+
+ResumeEventExtreme <- function(datasetWithoutCatDate, statisticalResume, type=NULL){
+  i <- 1
+  vectorGrowth <- c()
+  vectorStartIndex <- c()
+  vectorEndIndex <- c()
+  vectorInterpreter <- c()
+  for(i in i:length(datasetWithoutCatDate)){
+    listColumn <- datasetWithoutCatDate[[i]]
+    if(type == "Growth"){
+      listExtremeAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Growth")
+    }else if (type == "Decay"){
+      listExtremeAnalysisResult <- ResumeHighestGrowthAnalysis(diff(listColumn),"Decay")
+    }
+    
+    vectorGrowth[i] <-listExtremeAnalysisResult$valueResult
+    vectorStartIndex[i] <-listExtremeAnalysisResult$startIndexResult
+    vectorEndIndex[i] <-listExtremeAnalysisResult$endIndexResult
+    
+    #checking if range > 75% data range
+    vectorInterpreter[i] <- InterpreterExtremeEvent(vectorGrowth[i], statisticalResume[i,])
+  }
+  #exception
+  vectorEndIndex <- vectorEndIndex + 1
+  
+  #Combine all process into df
+  dfExtremeEvent <- data.frame(vectorGrowth, vectorStartIndex, vectorEndIndex, vectorInterpreter)
+  if(type == "Growth"){
+    colnames(dfExtremeEvent) <- c("IncValue", "IncStartIndex", "IncEndIndex", "IncInterpreter")
+  }else if (type == "Decay"){
+    colnames(dfExtremeEvent) <- c("DecValue", "DecStartIndex", "DecEndIndex", "DecInterpreter")
+  }
+  
+  return(dfExtremeEvent)
+}
+
+InterpreterExtremeEvent <- function (value, statisticalResume){
+  #Initalizing
+  message <- NULL
+  minVal <- as.numeric(as.character(statisticalResume$MinValue))
+  maxVal <- as.numeric(as.character(statisticalResume$MaxValue))
+  
+  rangeVal <- maxVal - minVal
+  
+  print(value)
+  print(0.75*rangeVal)
+  #if value is higher then 65% range data its mean Extreme Event
+  if(abs(value) > (0.65*rangeVal)){
+    message <- "extreme"
+  }else{
+    message <- "normal"
+  }
+  
+  return(message)
+}
+
+RepeatedEventDocPlanning <- function(listRepeated){
+  #CONTENT DETERMINATION
+  i <- 1
+  maxValue <- 0
+  maxIndex <- 0
+  for(i in i:length(listRepeated)){
+    if(listRepeated[[i]]$RepValue > maxValue){
+      maxValue <- listRepeated[[i]]$RepValue
+      maxIndex <- i
+    }
+  }
+  
+  if(maxValue != 0){
+    i <- 1
+    vectorRepeatedInterpretResult <- c()
+    selectedColumn <- columnName[maxIndex]
+    for(i in i:length(listRepeated[[maxIndex]]$Start)){
+      selectedIndex <-listRepeated[[maxIndex]]$Start[i]
+      selectedValue <- datasetWithoutDate[[selectedColumn]][selectedIndex]
+      
+      #DATA INTERPRETATION
+      vectorRepeatedInterpretResult[[i]] <- DataInterpreterAdjective(selectedValue, selectedColumn, statisticalResume)$InterpreterResult
+    }
+  }
+  
+  #DOCUMENT STRUCTURING
+  resumeRepeatedLimit <- as.integer(nrow(dataset) * 0.1)
+  resumeRepeatedInterval <- paste0(DataInterpreterInterval(datasetIntervalValue, type = "default"), "s")
+  if(maxValue != 0){
+    resumeRepeated <- ResumeRepeated2(columnName[[maxIndex]], dataset, vectorRepeatedInterpretResult, listRepeated[[maxIndex]]$Start, listRepeated[[maxIndex]]$End)
+    resumeRepeated <- paste("There were some repeating value more than @limit @interval: ", resumeRepeated)
+  }else{
+    resumeRepeated <- "There were no repeating values within @limit @interval or more, every value changed from time to time."
+  }
+  
+  #Referring Expression Generation 
+  resumeRepeated <- gsub("@limit", resumeRepeatedLimit, resumeRepeated)
+  resumeRepeated <- gsub("@interval", resumeRepeatedInterval, resumeRepeated)
+  
+  return(resumeRepeated)
+}
+
+CorrelationAnalysis <- function(data){
+  return(cor(data))
+}
+
+CorrelationRoutineMessage <- function(corMatrix){
+  #Correlation Routine Message Analysis
+  coreMean <- apply(abs(corMatrix), 2, mean)
+  highestMean <- max(coreMean)
+  highestIndex <- which.max(coreMean)
+  
+  message <- correlationRoutineDocPlan(highestMean, names(highestIndex))
+  return(message)
+}
+
+correlationRoutineDocPlan <- function(value, parameter){
+  #Document Structuring
+  # (X) appears to have a highest direct impact to all variable with very strong relationship in average.
+  
+  interpreterResult <- CorrelationInterpreterAdjective(value)
+  result <- ""
+  result <- paste0(parameter, " appears to have a highest impact to all variable with ",
+                   interpreterResult$InterpreterResult, " in average.")
+  return(result)
+}
+
+CorrelationSignificantMessage <- function(corMatrix){
+  #Correlation Significant Message Analysis
+  
+  corMatrix<-CorrelationSignificantMsgContentDetermination(corMatrix)
+  # Example: 
+  
+  # PM2.5       DEWP       TEMP PRES LWS IS IR
+  # PM2.5     0  0.0000000  0.0000000    0   0  0  0
+  # DEWP      0  0.0000000  0.0000000    0   0  0  0
+  # TEMP      0  0.8580855  0.0000000    0   0  0  0
+  # PRES      0 -0.7387440 -0.7730187    0   0  0  0
+  # LWS       0  0.0000000  0.0000000    0   0  0  0
+  # IS        0  0.0000000  0.0000000    0   0  0  0
+  # IR        0  0.0000000  0.0000000    0   0  0  0
+  
+  #IF THERE's NO SIGNIFICANT MESSAGE (*doesn't have strong impact)
+  if(sum(corMatrix != 0) == 0){
+    return(NULL)
+  }
+  
+  # Decide, we read as a row, or column
+  # The higher val win
+  rowMode <- max(abs(apply(corMatrix, 1, sum)))
+  colMode <- max(abs(apply(corMatrix, 2, sum)))
+  
+  result<-""
+  
+  # If reading as a row
+  if(rowMode > colMode){
+    # Get the row index when value != 0
+    vecParam <- which(apply(corMatrix, 1, sum) != 0)
+    # TEMP PRES 
+    # 3    4
+    
+    
+    i<-1
+    for(i in i:length(vecParam)){
+      xParam <- names(vecParam)[i]
+      # [1] "TEMP"
+      
+      yParam <- c("")
+      yValue <- c("")
+      
+      j<-1
+      index <- 1
+      for(j in j:length(corMatrix)){
+        if(corMatrix[xParam,j] != 0){
+          yParam[index] <- names(corMatrix)[j]
+          
+          #Checking Trend
+          msgTrend <- statisticalResume[statisticalResume$ColName == xParam, "Trend"]
+          #If Relationship is Positive 
+          if(corMatrix[xParam,j] >= 0){
+            if(msgTrend == "+"){
+              yValue[index] <- "posInc"
+            }else{
+              yValue[index] <- "posDec"
+            }
+            
+            #If Relationship is Negative 
+          }else{
+            if(msgTrend == "+"){
+              yValue[index] <- "negInc"
+            }else{
+              yValue[index] <- "negDec"
+            }
+          }
+          
+          #Increment
+          index <- index + 1
+        }
+      }
+      
+      # xParam 
+      # [1] "TEMP"
+      # yParam 
+      # [1] "DEWP"
+      # yValue
+      # [1] "posInc"
+      sentence <- CorrelationSignificantMsgAggregation(xParam, yParam, yValue)
+      # result
+      # "A rise in TEMP causes an attendant increase in DEWP."
+      # explanation: Increase in TEMP causing (Temp trend is +) causing positive relation (0.8580855) to DEWP
+      # NOTE: sentence, can be multiple EXAMPLE: "  An increase in DEWP resulted an increase in TEMP. 
+      #                                             An increase in DEWP resulted a decay in PRES."
+      
+      result <- paste(result, sentence)
+    } 
+  }else{
+    vecParam <- which(apply(corMatrix, 2, sum) != 0)
+    
+    i<-1
+    for(i in i:length(vecParam)){
+      xParam <- names(vecParam)[i]
+      yParam <- c("")
+      yValue <- c("")
+      
+      j<-1
+      index <- 1
+      for(j in j:length(corMatrix)){
+        if(corMatrix[j,xParam] != 0){
+          yParam[index] <- names(corMatrix)[j]
+          
+          msgTrend <- statisticalResume[statisticalResume$ColName == xParam, "Trend"]
+          if(corMatrix[j,xParam] >= 0){
+            if(msgTrend == "+"){
+              yValue[index] <- "posInc"
+            }else{
+              yValue[index] <- "posDec"
+            }
+          }else{
+            if(msgTrend == "+"){
+              yValue[index] <- "negInc"
+            }else{
+              yValue[index] <- "negDec"
+            }
+          }
+          index <- index + 1
+        }
+      }
+      sentence <- CorrelationSignificantMsgAggregation(xParam, yParam, yValue)
+      
+      result <- paste(result, sentence)
+    }
+  }
+  
+  result <- gsub(".  ", ". ", result)
+  result <- gsub("  ", "", result)
+  return(result)
+}
+
+CorrelationSignificantMsgContentDetermination <- function(matrix){
+  # ContentDetermination
+  # Only showing var more than 0.7
+  
+  matrix[!lower.tri(matrix)] <- 0
+  matrix <- as.data.frame(matrix)
+  matrix[matrix < 0.7 & matrix >= 0 | matrix > -0.7 & matrix <= 0] <- 0
+  
+  # Example: 
+  
+  # PM2.5       DEWP       TEMP PRES LWS IS IR
+  # PM2.5     0  0.0000000  0.0000000    0   0  0  0
+  # DEWP      0  0.0000000  0.0000000    0   0  0  0
+  # TEMP      0  0.8580855  0.0000000    0   0  0  0
+  # PRES      0 -0.7387440 -0.7730187    0   0  0  0
+  # LWS       0  0.0000000  0.0000000    0   0  0  0
+  # IS        0  0.0000000  0.0000000    0   0  0  0
+  # IR        0  0.0000000  0.0000000    0   0  0  0
+  
+  return(matrix)
+}
+
+CorrelationSignificantMsgAggregation <- function(x, parameter, category){
+  
+  # x 
+  # [1] "TEMP"
+  # parameter 
+  # [1] "DEWP"
+  # category
+  # [1] "posInc"
+  
+  # REMOVING DUPLICATE
+  type <- unique(category)
+  # type
+  # [1] "posInc"
+  
+  df <- data.frame(parameter, category)
+  # > df
+  #   parameter category
+  # 1      DEWP   posInc
+  
+  result <- ""
+  i<-1
+  # LOOPING WITH UNIQUE CATEGORY
+  for(i in i:length(type)){
+    # SUM, Checking if category has multiple value
+    totalType <- sum(category == type[i])
+    
+    groupedPar <- ""
+    
+    # If selected cat only have 1 value
+    if(totalType == 1){
+      groupedPar <- paste0(as.character(df[df$category == type[i],]$parameter))
+      # groupedPar
+      # [1] "DEWP"
+      
+      # If selected category has multiple value
+    }else{
+      j<-1
+      # loop as multiple value
+      for(j in j:nrow(df[df$category == type[i],])){
+        # if last data, add "and" phrase
+        if(j == nrow(df[df$category == type[i],])){
+          groupedPar <- paste0(groupedPar, "and ")
+          groupedPar <- paste0(groupedPar, as.character(df[df$category == type[i],]$parameter[j]))
+        }else{
+          groupedPar <- paste0(groupedPar, as.character(df[df$category == type[i],]$parameter[j]), ", ")
+        }
+      }
+    }
+    
+    #REPLACING Param X with groupedPar
+    # grouped par example: DEWP, TEMP, and PM2.5
+    sentence <- change_word_bank_Cor(type[i])
+    sentence <- gsub("@X", x, sentence)
+    sentence <- gsub("@Y", groupedPar, sentence)
+    
+    result <- paste(result, sentence)
+  }
+  
+  # print("----")
+  # print(result)
+  return(result)
 }

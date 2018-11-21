@@ -1,0 +1,8 @@
+Category,Lower,Upper
+no linear association,0,0
+insubtantial relationship,0,0.1
+low relationship,0.1,0.3
+moderate relationship,0.3,0.5
+strong relationship,0.5,0.7
+very strong relationship,0.7,0.9
+almost perfect relationship,0.9,1
