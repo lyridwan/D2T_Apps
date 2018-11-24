@@ -809,19 +809,12 @@ DataInterpreterInterval <- function (interval, type = "default"){
       result <- "Today"
     }else if(interval == 168){
       result <- "This week"
-    }else if(interval == 720 || interval == 744){
+    }else if(interval == 672 || interval == 696 || interval == 720 || interval == 744){
       result <- "This month"
     }else if(interval == 8760 || interval == 8736){
       result <- "This year"
     }else{
       result <- ""
-    }
-    if(interval == "hourly"){
-      n <- 6
-    }else if(interval == "daily"){
-      n <- 7
-    }else if(interval == "weekly" || interval == "monthly" ||interval == "yearly"){
-      n <- 4
     }
   }else if(type == "limit"){
     #hourly data
@@ -832,9 +825,51 @@ DataInterpreterInterval <- function (interval, type = "default"){
       result <- 7
     #monthly&yearly data
     }else if(interval == 168 || 
-             interval == 720 || 
+             interval == 672 || interval == 696 || interval == 720 || 
              interval == 744 || 
              interval == 8760 || 
+             interval == 8736){
+      result <- 4
+    }else{
+      result <- ""
+    }
+  }else if(type == "lastinterpreter"){
+    #hourly data
+    if(interval == 1){
+      result <- "yesterday"
+    #daily data
+    }else if(interval == 24){
+      result <- "last week"
+    #weekly data
+    }else if(interval == 168){
+      result <- "last  month"
+    #monthly data
+    }else if(interval == 672 || interval == 696 || interval == 720 || 
+             interval == 744 ){
+      result <- "last  year"
+    #yearly data
+    }else if(interval == 8760 || 
+             interval == 8736){
+      result <- "last  quarter"
+    }else{
+      result <- ""
+    }
+  }else if(type == "lastlimit"){
+    #hourly data
+    if(interval == 1){
+      result <- 12
+    #daily data
+    }else if(interval == 24){
+      result <- 7
+    #weekly data
+    }else if(interval == 168){
+      result <- 4
+    #monthly data
+    }else if(interval == 672 || interval == 696 || interval == 720 || 
+             interval == 744 ){
+      result <- 12
+    #yearly data
+    }else if(interval == 8760 || 
              interval == 8736){
       result <- 4
     }else{
@@ -1653,15 +1688,17 @@ CurrentDesc <- function(interpreterResult, vectorTrendDesc, dataset){
           }
         }
         
-        
+        phrase<-""
         #after groping the column
         interpreter <- interpreterResult$InterpreterResult[i]
         if(interpreter == "Constant"){
-          phrase <- change_word_bank_AQ2()
-          interpreter = "from the first time"
+          interpreter <- change_word_bank_AQ2() 
+          phrase <- "from the first time"
+        }else{
+          phrase <- "condition"
         }
         
-        subSentence <- paste(subSentence, "in", interpreter, "condition")
+        subSentence <- paste(subSentence, "in", interpreter, phrase)
         mainSentence <- paste0(mainSentence, subSentence,". ")
       }
       # cat("reps:", i, " ",reps,"\n")
@@ -2427,7 +2464,7 @@ MissingValueHandling <- function(dataset){
 IsSpecialCorpusAvailable <- function(interpreterPredict, column){
   case1 <- c("Rainfall","CloudCoverage")
   case2 <- c("Temperature")
-  case3 <- c("CO","NO","NO2","NOX","O3","PM10","PM25","SO2")
+  case3 <- c("CO","O3","PM10","PM25","SO2")
   
   boolcase1 <- case1 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
   boolcase2 <- case2 %in% mainConfig[!is.na(mainConfig$Rule),]$ColName
@@ -2553,11 +2590,16 @@ TrendDescTemperature <- function(){
 PostProcessing <- function(corpus){
   result <- mainConfig[!is.na(mainConfig$Alternate),]
   
-  i<-1
-  for(i in i:nrow(result)){
-    corpus <- gsub(as.character(result$ColName[i]), as.character(result$Alternate[i]), corpus)
+  if(nrow(result) != 0){
+    i<-1
+    for(i in i:nrow(result)){
+      corpus <- gsub(as.character(result$ColName[i]), as.character(result$Alternate[i]), corpus)
+    }
   }
   
+  
+  corpus <- gsub("   ", " ", corpus)
+  corpus <- gsub("  ", " ", corpus)
   return(corpus)
 }
 
@@ -2659,12 +2701,16 @@ RepeatedEventDocPlanning <- function(listRepeated){
 }
 
 CorrelationAnalysis <- function(data){
+  #using pearson correlation coefficient
   return(cor(data))
 }
 
 CorrelationRoutineMessage <- function(corMatrix){
   #Correlation Routine Message Analysis
+  #Mean with absolute value
   coreMean <- apply(abs(corMatrix), 2, mean)
+  
+  #get the highest mean with their index
   highestMean <- max(coreMean)
   highestIndex <- which.max(coreMean)
   
@@ -2897,4 +2943,258 @@ CorrelationSignificantMsgAggregation <- function(x, parameter, category){
   # print("----")
   # print(result)
   return(result)
+}
+
+CurrentHighest <- function(data, statSummary, interval){
+  analysisResult <- c()
+  analysisIndex <- c()
+  
+  i <- 1
+  result <- ""
+  for(i in i:length(data)){
+    #get highgest/lowest value from statsum
+    maxVal <- as.numeric(as.character(statSummary[statSummary$ColName == names(data)[i],]$MaxValue))
+    minVal <- as.numeric(as.character(statSummary[statSummary$ColName == names(data)[i],]$MinValue))
+    
+    sentence <- ""
+    analysisResult[i] <- NA
+    analysisIndex[i] <- NA
+    if(data[i] >= maxVal){
+      analysisResult[i] <- "+"
+      analysisIndex[i] <- i
+    }else if(data[i] <= minVal){
+      analysisResult[i] <- "-"
+      analysisIndex[i] <- i
+    }
+    result <- paste0(result, sentence)
+  }
+  
+  result <- CurrentHighestAggregation(data, analysisResult, analysisIndex, interval)
+  return(result)
+}
+
+CurrentHighestAggregation <- function(dataName, result, index, interval){
+  thisInterval <- DataInterpreterInterval(interval)
+  
+  sentence1 <- ""
+  sentence2 <- ""
+  message <- ""
+  
+  if(sum(!is.na(result) == TRUE) != 0){
+    result <- result[!is.na(result)]
+    index <- index[!is.na(index)]
+    
+    reps<- rep(0, length(result))
+    
+    if(sum(result == "-") == 1){
+      sentence1 <- paste0(names(dataName)[index[[which(result == "-")]]], " reached their lowest value on this ", thisInterval, ".")
+    }else if(sum(result == "-") > 1){
+      i<-1
+      groupedMsg <- ""
+      for(i in i:length(result)){
+        # print(i)
+        if(result[i] == "-"){
+          if(i == length(result)){
+            groupedMsg <- paste0(groupedMsg, " and ", names(dataName)[index[i]])
+          }else{
+            
+            groupedMsg <- paste0(groupedMsg, names(dataName)[index[i]], ",")
+          }
+        }
+      }
+      
+      sentence1 <- paste0(groupedMsg, " reached their lowest value on this ", thisInterval, ".")
+    }
+    
+    
+    if(sum(result == "+") == 1){
+      sentence2 <- paste0(names(dataName)[index[[which(result == "+")]]], " reached their highest value on this ", thisInterval, ".")
+    }else if(sum(result == "+") > 1){
+      i<-1
+      groupedMsg <- ""
+      for(i in i:length(result)){
+        # print(i)
+        if(result[i] == "+"){
+          if(i == length(result)){
+            groupedMsg <- paste0(groupedMsg, "and ", names(dataName)[index[i]])
+          }else{
+            
+            groupedMsg <- paste0(groupedMsg, names(dataName)[index[i]], ", ")
+          }
+        }
+      }
+      
+      sentence2 <- paste0(groupedMsg, " reached their highest value on this ", thisInterval, ".")
+    }
+    
+  }
+  message <- paste(sentence1, sentence2)
+  
+  return(message)
+}
+
+ComparsionAnalysis <- function (data, dataset, interval){
+  limit <- DataInterpreterInterval(interval, type = "lastlimit")
+  datasetLimit<- dataset[nrow(dataset) - limit, !colnames(dataset) == "DateTime"]
+  
+  i<-1
+  vectorResult <- c()
+  for(i in i:length(data)){
+    if(data[i] > datasetLimit[i]){
+      vectorResult[i] <- "higher than"
+    }else if(data[i] < datasetLimit[i]){
+      vectorResult[i] <- "lower than"
+    }else if(data[i] == datasetLimit[i]){
+      vectorResult[i] <- "equal with"
+    }
+  }
+  
+  return(vectorResult)
+}
+
+ComparsionMessage <- function(data, result, interval){
+  limitInterpreter <- DataInterpreterInterval(interval, type = "lastinterpreter")
+  
+  groupedParam1 <- c()
+  if(sum(result == "equal with") == 1){
+    index <- which(result == "equal with")
+    
+    groupedParam1[1] <- names(data[index])
+  }else if(sum(result == "equal with") > 1){
+    i<-1
+    index <- 1
+    for(i in i:length(result)){
+      if(result[i] == "equalwith"){
+        groupedParam1[index] <- names
+        index <- index + 1
+      }
+    }
+  }
+  
+  groupedParam2 <- c()
+  if(sum(result == "higher than") == 1){
+    index <- which(result == "higher than")
+    
+    groupedParam2[1] <- names(data[index])
+  }else if(sum(result == "higher than") > 1){
+    i<-1
+    index <- 1
+    for(i in i:length(result)){
+      if(result[i] == "higher than"){
+        groupedParam2[index] <- names(data[i])
+        index <- index + 1
+      }
+    }
+  }
+  
+  groupedParam3 <- c()
+  if(sum(result == "lower than") == 1){
+    index <- which(result == "lower than")
+    
+    groupedParam3[1] <- names(data[index])
+  }else if(sum(result == "lower than") > 1){
+    i<-1
+    index <- 1
+    for(i in i:length(result)){
+      if(result[i] == "lower than"){
+        groupedParam3[index] <- names(data[i])
+        index <- index + 1
+      }
+    }
+  }
+  
+  groupedMsg1 <- ComparsionAggregation(groupedParam1)
+  groupedMsg2 <- ComparsionAggregation(groupedParam2)
+  groupedMsg3 <- ComparsionAggregation(groupedParam3)
+  
+  sentence <- ""
+  if(!is.null(groupedParam1)){
+    if(length(groupedParam1) == 1){
+      tobe <- "is"
+      s <- ""
+    }else{
+      tobe <- "are"
+      s <- "s"
+    }
+    sentence<- paste0(groupedMsg1, " parameter", s, " ", tobe, " equal with ", limitInterpreter, "'s data. ")
+  }
+  
+  #IF ALL LOWER THAN
+  if(is.null(groupedMsg2)){
+    if(length(groupedParam3) == 1){
+      tobe <- "is"
+      s <- ""
+    }else if(length(groupedParam3) == length(data)){
+      groupedMsg2 <- "All"
+    }else{
+      tobe <- "are"
+      s <- "s"
+    }
+    
+    sentence<- paste0(sentence, groupedMsg3, " parameter", s, " ", tobe, " lower than ", limitInterpreter, "'s data.")
+  
+  #IF ALL HIGHER THAN
+  }else if(is.null(groupedMsg3)){
+    if(length(groupedParam2) == 1){
+      tobe <- "is"
+      s <- ""
+    }else if(length(groupedParam2) == length(data)){
+      groupedMsg2 <- "All"
+      tobe <- "are"
+      s <- "s"
+    }else{
+      tobe <- "are"
+      s <- "s"
+    }
+    
+    
+    sentence<- paste0(sentence, groupedMsg2, " parameter", s, " ", tobe, " higher than ", limitInterpreter, "'s data.")
+  }else{
+    if(length(groupedParam2) <= length(groupedParam3)){
+      if(length(groupedParam2) == 1){
+        tobe <- "is"
+        s <- ""
+      }else{
+        tobe <- "are"
+        s <- "s"
+      }
+      
+      sentence<- paste0(sentence, groupedMsg2, " parameter", s, " ", tobe, " higher than ", limitInterpreter, "'s data, ",
+                        "but the rest parameters are lower than ", limitInterpreter, "'s data.")
+    }else{
+      if(length(groupedParam3) == 1){
+        tobe <- "is"
+        s <- ""
+      }else{
+        tobe <- "are"
+        s <- "s"
+      }
+      
+      sentence<- paste0(sentence, groupedMsg3, " parameter", s, " ", tobe, " lower than ", limitInterpreter, "'s data, ",
+                        "but the rest parameters are higher than ", limitInterpreter, "'s data.")
+    }
+  }
+  
+  print(sentence)
+  
+}
+
+ComparsionAggregation <- function(group){
+  if(is.null(group)){
+    return(group)
+  }else if(length(group) == 1){
+    return(group)
+  }else{
+    i <- 1
+    message <- ""
+    for(i in i:length(group)){
+      if(i == length(group)){
+        message <- paste0(message, "and ", group[i])
+      }else{
+        message <- paste0(message, group[i], ", ") 
+      }
+    }
+    
+    return(message)
+  }
 }

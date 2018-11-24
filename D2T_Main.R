@@ -1,4 +1,3 @@
-# setwd("~/Programming/GitHub/D2T_Apps")
 setwd("~/GitHub/D2T_Apps")
 # INITIALIZING
 source("D2T_Machine.R", local = TRUE)
@@ -7,7 +6,7 @@ source("D2T_Machine.R", local = TRUE)
 # GENERAL DATA HANDLER |
 #-----------------------
 # Force read, with default parameter v2,v3,v4,etc if there's no header available
-dataset <- as.data.frame(fread(file="DatasetsExperiment/Climatology#1.csv"))
+dataset <- as.data.frame(fread(file="DatasetsExperiment/Climatology#2.csv"))
 colnames(dataset)[1] <- "DateTime"
 
 # Dataset with datetime Column dropped
@@ -122,9 +121,6 @@ correlationResult <- CorrelationAnalysis(datasetNumericalWithoutDate)
 
 
 
-
-
-
 # DATA INTERPRETATION: 0.Preparation
 # ------------Begin------------ 
 # row [N] data, now
@@ -138,6 +134,11 @@ dataset2Last <- datasetNumerical[nrow(datasetNumerical)-2, !colnames(datasetNume
 
 # Average Resume
 averageResume <- as.data.frame.list(colMeans(datasetNumerical[, !colnames(datasetNumerical) == "DateTime"]))
+# ------------End------------ 
+
+# SYGNAL ANALYSIS: 2.Extreme Event
+# ------------Begin------------ 
+comparsionResult <- ComparsionAnalysis(datasetNow, datasetNumerical, datasetIntervalValue)
 # ------------End------------ 
 
 
@@ -171,6 +172,7 @@ for(i in i:length(datasetNumericalWithoutDate)){
 resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName)
 trendIntro <- ReadIntro(type="Trend")
 resumeTrend <- paste0(trendIntro," ",ResumeTrend(statisticalResume))
+resumeComparsion <- ComparsionMessage(datasetNow, comparsionResult, datasetIntervalValue)
 resumeRepeated <- RepeatedEventDocPlanning(listRepeatedAnalysisResult)
 
 MDdocPlanResult <- MotifDiscoveryDocPlan(MDinterpreterResult)
@@ -181,15 +183,16 @@ resumeCorrelationSignificant <- CorrelationSignificantMessage(correlationResult)
 resumeCorrelation <- paste(resumeCorrelationRoutine, resumeCorrelationSignificant)
 
 resumeExtremeEvent <- DocPlanHighestGrowthDecay(dataset[["DateTime"]], dfExtremeEvent)
-resumeResult <- paste(resumeIntro, resumeTrend, resumeRepeated, resumeExtremeEvent, resumeMotifDiscovery, resumeCorrelation)
+resumeResult <- paste(resumeIntro, resumeTrend, resumeComparsion, resumeRepeated, resumeExtremeEvent, resumeMotifDiscovery, resumeCorrelation)
 
 
 
 
 # 
 currentIntro <- ReadCurrentIntro(dataset[nrow(dataset),"DateTime"])
-currentDesc <- CurrentDesc(interpreterNow, vectorTrendDescriptionAnalysis, datasetWithoutDate)
-currentResult <- paste(currentIntro, currentDesc)
+currentDesc <- CurrentDesc(interpreterNow, vectorTrendDescriptionAnalysis, datasetNumericalWithoutDate)
+currentHighest <- CurrentHighest(datasetNow, statisticalResume, datasetIntervalValue)
+currentResult <- paste(currentIntro, currentDesc, currentHighest)
 
 
 # PREDICT LEXICAL PROCESS
@@ -220,10 +223,12 @@ predictResult <- paste(predictIntro, predictContent)
 
 
 
-# resumeResult <- PostProcessing(resumeResult)
-# currentResult <- PostProcessing(currentResult)
-# predictResult <- PostProcessing(predictResult)
+resumeResult <- PostProcessing(resumeResult)
+currentResult <- PostProcessing(currentResult)
+predictResult <- PostProcessing(predictResult)
 
 resumeResult
 currentResult
 predictResult
+
+print("---FINISH---")
