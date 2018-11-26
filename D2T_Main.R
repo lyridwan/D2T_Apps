@@ -6,7 +6,9 @@ source("D2T_Machine.R", local = TRUE)
 # GENERAL DATA HANDLER |
 #-----------------------
 # Force read, with default parameter v2,v3,v4,etc if there's no header available
-dataset <- as.data.frame(fread(file="DatasetsExperiment/Climatology#2.csv"))
+
+filename <- "BeijingPM25#1"
+dataset <- as.data.frame(fread(file=paste0("DatasetsExperiment/",filename,".csv")))
 colnames(dataset)[1] <- "DateTime"
 
 # Dataset with datetime Column dropped
@@ -93,8 +95,8 @@ dfExtremeEvent <- cbind(columnNameNumerical, dfExtremeGrowth, dfExtremeDecay)
 
 i <- 1
 listRepeatedAnalysisResult <- list()
-for(i in i:length(datasetWithoutDate)){
-  vectorColumn <- datasetWithoutDate[[i]]
+for(i in i:length(datasetNumericalWithoutDate)){
+  vectorColumn <- datasetNumericalWithoutDate[[i]]
   listRepeatedAnalysisResult[[i]] <- ResumeRepeatedAnalysis(vectorColumn)
 }
 # ------------End------------ 
@@ -227,8 +229,9 @@ resumeResult <- PostProcessing(resumeResult)
 currentResult <- PostProcessing(currentResult)
 predictResult <- PostProcessing(predictResult)
 
-resumeResult
-currentResult
-predictResult
+print(resumeResult)
+print(currentResult)
+print(predictResult)
 
+source("plot.R", local = TRUE)
 print("---FINISH---")

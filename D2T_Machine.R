@@ -88,7 +88,10 @@ ReadConfig <- function (){
   i<-1
   for(i in i:nrow(mainConfig)){
     tempColumn <- as.character(unlist(mainConfig$ColName[i]))
-    dfResult[dfResult$ColName == tempColumn,] <- as.vector(unlist(mainConfig[mainConfig$ColName == tempColumn,]))
+    dfResult[dfResult$ColName == tempColumn, "ColName"] <- as.character(mainConfig[mainConfig$ColName == tempColumn, "ColName"])
+    dfResult[dfResult$ColName == tempColumn, "Type"] <- as.character(mainConfig[mainConfig$ColName == tempColumn, "Type"])
+    dfResult[dfResult$ColName == tempColumn, "Rule"] <- as.character(mainConfig[mainConfig$ColName == tempColumn, "Rule"])
+    dfResult[dfResult$ColName == tempColumn, "Alternate"] <- as.character(mainConfig[mainConfig$ColName == tempColumn, "Alternate"])
   }
   
   # Checking variable type with typeof()
@@ -651,7 +654,7 @@ DataInterpreterAdjective <- function(value, type="General",statisticalResume=NUL
         result <- MembershipFuzzy(value, corpus);
       }
     }else{
-      corpus <- read.table(file=paste0("Corpus/Range/",type,"Adjective.csv"), sep=",", header=TRUE)
+      corpus <- read.table(file=paste0("Corpus/Crisp/",type,"Adjective.csv"), sep=",", header=TRUE)
       result <- MembershipClassifier(value, corpus);
     }
   }else{
@@ -680,7 +683,7 @@ AQDataInterpreterAdjective <- function(value, type="AirQuality"){
         result <- MembershipFuzzy(value, corpus);
       }
     }else{
-      corpus <- read.table(file=paste0("Corpus/Range/",type,"Adjective.csv"), sep=",", header=TRUE)
+      corpus <- read.table(file=paste0("Corpus/Crisp/",type,"Adjective.csv"), sep=",", header=TRUE)
       result <- MembershipClassifier(value, corpus);
     }
   }else{
@@ -693,7 +696,7 @@ AQDataInterpreterAdjective <- function(value, type="AirQuality"){
 }
 
 CorrelationInterpreterAdjective <- function(value){
-  corpus <- read.table(file=paste0("Corpus/Range/CorrelationAdjective.csv"), sep=",", header=TRUE)
+  corpus <- read.table(file=paste0("Corpus/Crisp/CorrelationAdjective.csv"), sep=",", header=TRUE)
   result <- MembershipClassifier(value, corpus);
   
   return(result)
@@ -1952,7 +1955,7 @@ TrendAnalysis <- function(start,dataset, min, max){
   
 	   # print(reg)
 	   # plot(dataset)
-	   abline(reg,col="red")
+	   abline(reg, col="yellow", lwd=2)
   }
   
 
@@ -2079,7 +2082,7 @@ DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth){
       sentence <- ""
       if(dfGrowth$IncInterpreter[i] == "extreme" && dfGrowth$DecInterpreter[i] == "extreme"){
         event <- "fluctuated"
-        adverb <- "significantly"
+        adverb <- AdjectiveRefferingExpression(type="ExtremeEvent")
         phrase <- paste(event, adverb)
         
         # sentence <- paste0(dfGrowth$columnNameNumerical[i], " ", 
@@ -2096,7 +2099,7 @@ DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth){
         flIndex <- flIndex  +1
       }else if(dfGrowth$IncInterpreter[i] == "extreme"){
         event <- "increased"
-        adverb <- "significantly"
+        adverb <- AdjectiveRefferingExpression(type="ExtremeEvent")
         phrase <- paste(event, adverb)
         
         dateRange <- LexicalDateRange(as.character(dateTime[dfGrowth$IncStartIndex[i]]), 
@@ -2110,7 +2113,7 @@ DocPlanHighestGrowthDecay <- function (dateTime, dfGrowth){
         incIndex <- incIndex  +1
       }else if(dfGrowth$DecInterpreter[i] == "extreme"){
         event <- "decreased"
-        adverb <- "significantly"
+        adverb <- AdjectiveRefferingExpression(type="ExtremeEvent")
         phrase <- paste(event, adverb)
         
         dateRange <- LexicalDateRange(as.character(dateTime[dfGrowth$DecStartIndex[i]]), 
@@ -2321,12 +2324,16 @@ MotifDiscoveryMicroPlan <- function(listColumn, listMD){
   #If there's no pattern match
   MDcontent <- ""
   if(sum(!is.na(listColumn)) == 0){
-    verb <- MotifDiscoveryRE()
-    MDintro <- paste0("For the past ", limit, " ", interval, " ,")
-    MDcontent <- paste("no", verb, "patterns were found for each categorical parameters.")
-    
-    MDsentence <- paste(MDintro, MDcontent)
-    return(MDsentence)
+    if(!is.null(listColumn)){
+      verb <- AdjectiveRefferingExpression(type="MotifDiscovery")
+      MDintro <- paste0("For the past ", limit, " ", interval, " ,")
+      MDcontent <- paste("no", verb, "patterns were found for each categorical parameters.")
+      
+      MDsentence <- paste(MDintro, MDcontent)
+      return(MDsentence)
+    }else{
+      return("")
+    }
   #Aggregation
   }else{
     #There are a matching USD data pattern in the last 7 days 
@@ -2336,7 +2343,7 @@ MotifDiscoveryMicroPlan <- function(listColumn, listMD){
     if(sum(!is.na(listColumn)) == 1){
       selectedColindex <- as.numeric(listColumn[which(!is.na(listColumn))])
       selectedColname <- columnName[selectedColindex]
-      verb <- MotifDiscoveryRE()
+      verb <- AdjectiveRefferingExpression(type="MotifDiscovery")
       
       dateAggregation <- ""
       i <- 1
@@ -2440,8 +2447,8 @@ MotifDiscoveryMicroPlan <- function(listColumn, listMD){
 }
 
 #Motif Discovery Reffering Expressions
-MotifDiscoveryRE <- function (){
-  phrase <- as.matrix(read.table("Corpus/MotifDiscoveryRE.csv", header=FALSE, sep=';', quote=""))
+AdjectiveRefferingExpression <- function (type){
+  phrase <- as.matrix(read.table(paste0("Corpus/",type,"RE.csv"), header=FALSE, sep=';', quote=""))
   # print(corpus)
   n <- length(phrase)
   random_value <- as.integer(runif(1,1,n+0.5))
@@ -2673,7 +2680,7 @@ RepeatedEventDocPlanning <- function(listRepeated){
   if(maxValue != 0){
     i <- 1
     vectorRepeatedInterpretResult <- c()
-    selectedColumn <- columnName[maxIndex]
+    selectedColumn <- columnNameNumerical[maxIndex]
     for(i in i:length(listRepeated[[maxIndex]]$Start)){
       selectedIndex <-listRepeated[[maxIndex]]$Start[i]
       selectedValue <- datasetWithoutDate[[selectedColumn]][selectedIndex]
@@ -2687,7 +2694,7 @@ RepeatedEventDocPlanning <- function(listRepeated){
   resumeRepeatedLimit <- as.integer(nrow(dataset) * 0.1)
   resumeRepeatedInterval <- paste0(DataInterpreterInterval(datasetIntervalValue, type = "default"), "s")
   if(maxValue != 0){
-    resumeRepeated <- ResumeRepeated2(columnName[[maxIndex]], dataset, vectorRepeatedInterpretResult, listRepeated[[maxIndex]]$Start, listRepeated[[maxIndex]]$End)
+    resumeRepeated <- ResumeRepeated2(columnNameNumerical[[maxIndex]], datasetNumerical, vectorRepeatedInterpretResult, listRepeated[[maxIndex]]$Start, listRepeated[[maxIndex]]$End)
     resumeRepeated <- paste("There were some repeating value more than @limit @interval: ", resumeRepeated)
   }else{
     resumeRepeated <- "There were no repeating values within @limit @interval or more, every value changed from time to time."

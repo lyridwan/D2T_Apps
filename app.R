@@ -1,7 +1,7 @@
 # Define server logic for random distribution app ----
 server <- function(input, output) {
   setwd("~/GitHub/D2T_Apps")
-  source("D2T_Main.R", local = TRUE)
+  system.time(source("D2T_Main.R", local = TRUE))
   
   # Reactive expression to generate the requested distribution ----
   # This is called whenever the inputs change. The output functions

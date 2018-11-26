@@ -1,7 +1,8 @@
 ColName,Type,Rule,Alternate
-AirQuality,numeric,range,Air Quality
-WindSpeed,numeric,range,Wind Speed
-WindDirection,numeric,range,Wind Direction
-CloudCoverage,numeric,range,Cloud Coverage
-Temperature,numeric,fuzzy,NA
-Rainfall,numeric,fuzzy,NA
+DEWP,NA,NA,Dew Point
+TEMP,NA,NA,Temperature
+PRES,NA,NA,Pressure
+CBWD,NA,NA,Combined wind direction
+LWS,NA,NA,Cumulated wind speed
+LS,NA,NA,Cumulated hours of snow
+LR,NA,NA,Cumulated hours of rain
