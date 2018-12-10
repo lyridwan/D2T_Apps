@@ -26,6 +26,7 @@ library(xts)
 #install.packages("plotrix")
 library(greybox)
 library(data.table)
+library(corrplot)
 #5. ade4
 #install.packages("ade4")
 # library(ade4)
@@ -82,7 +83,7 @@ ReadConfig <- function (){
   dfResult <- data.frame(ColName = columnName, Type = nullSequence, Rule = nullSequence, Alternate=nullSequence, stringsAsFactors=FALSE)
   
   # Read config from file
-  mainConfig <- read.table("Config/mainconfig.csv", header=TRUE, sep=",")
+  mainConfig <- read.table("Config/datadescription.csv", header=TRUE, sep=",")
   
   # Load setting from default file
   i<-1
@@ -341,6 +342,9 @@ MembershipFuzzy <- function(value, corpus){
   if(is.null(corpus)){
     return (list(InterpreterResult = as.character("Constant"), InterpreterIndex = 0))
   }
+  
+  value <- as.double(value)
+  
   i <- 1;
   n <- nrow(corpus);
   m <- length(corpus);
@@ -372,8 +376,15 @@ MembershipFuzzy <- function(value, corpus){
       membershipValue[i] <- 9999
     }
   }
-  
   print(membershipValue)
+  
+  if(value < corpus[1, "v1"]){
+    membershipValue[1] <- 9999
+  }else if(value > corpus[length(membershipValue), "v4"]){
+    membershipValue[length(membershipValue)] <- 9999
+  }
+  
+  
   #check highest membership result
   interpreterResult <- corpus[which.max(membershipValue), "Category"]
   interpreterIndex <- which(interpreterResult == corpus$Category)
@@ -921,7 +932,7 @@ ReadIntro <- function(type="General"){
     # return("Woops no data intro!");
 }
 
-ReadResumeIntro <- function(dataset, ColName, source="data"){
+ReadResumeIntro <- function(dataset, ColName, title, source="data"){
   
   corpus <- as.matrix(read.table(file=paste0("Corpus/","ResumeIntro.csv"), header=FALSE, sep=';'))
 
@@ -931,7 +942,7 @@ ReadResumeIntro <- function(dataset, ColName, source="data"){
   result <- corpus[random_value]
 
   #Replaceing Data Source
-  result <- gsub("@source", source, result)
+  result <- gsub("@source", paste(title, source), result)
   
   #Replaceing Data Source
   interval <- DataInterpreterInterval(datasetIntervalValue, type = "interval")
@@ -1174,14 +1185,14 @@ ResumeTrend <- function(statisticalResume){
   }else{
     if(is.na(freq["0"]) && is.na(freq["+"])){
       # ALL -
-      result <- "Trend of all variable is decreased."
+      result <- "trend of all variable is decreased."
     }else if(is.na(freq["0"]) && is.na(freq["-"])){
       # ALL +
-      result <- "Trend of all variable is increased."
+      result <- "trend of all variable is increased."
       
     }else if(is.na(freq["+"]) && is.na(freq["-"])){
       # ALL 0
-      result <- "Trend of all variable is constant."
+      result <- "trend of all variable is constant."
       
     }else if(is.na(freq["0"])){
       # Only + -
@@ -2242,20 +2253,29 @@ KMP <- function(string, pattern){
 }
 
 MotifDiscoveryAnalysis <- function(colName, dataset, datasetIntervalValue){
-  
-  n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
-  index <- length(dataset)+1 - n
-  
-  #pattern
-  pattern <- dataset[index:length(dataset)]
-  
-  #dataest
-  dataset <- dataset[1:index]
-  
+  #list Parameter Categorical
+  listParam <- mainConfig[which(mainConfig$Type == ("character") | mainConfig$Type == ("categorical")| mainConfig$Type == ("factor")),]$ColName
   result <- list()
-  if(!is.null(KMP(dataset, pattern))){
-    result$total <- length(KMP(dataset,pattern))
-    result$pattern <- KMP(dataset,pattern)
+  
+  if(colName %in% listParam){
+    n <- DataInterpreterInterval(datasetIntervalValue, type = "limit")
+    index <- length(dataset)+1 - n
+    
+    #pattern
+    pattern <- dataset[index:length(dataset)]
+    
+    #dataest
+    dataset <- dataset[1:index]
+    
+    
+    
+    if(!is.null(KMP(dataset, pattern))){
+      result$total <- length(KMP(dataset,pattern))
+      result$pattern <- KMP(dataset,pattern)
+    }else{
+      result$total <- 0
+      result$pattern <- NA
+    }
   }else{
     result$total <- 0
     result$pattern <- NA
@@ -2266,6 +2286,7 @@ MotifDiscoveryAnalysis <- function(colName, dataset, datasetIntervalValue){
 
 MotifDiscoveryInterpreter <- function(dataset, datasetIntervalValue){
   result <- NA
+  
   
   listMD <- list()
   i<-1

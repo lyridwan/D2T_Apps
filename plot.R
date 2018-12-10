@@ -17,8 +17,6 @@ for(i in i:length(datasetNumericalWithoutDate)){
   if(dfExtremeEvent$IncInterpreter[i] == "extreme"){
     start <- dfExtremeEvent$IncStartIndex[i]
     end <- dfExtremeEvent$IncEndIndex[i]
-    print(start)
-    print(end)
     lines(x[start:end], y[start:end], col="green", lwd=2)
   }
   
@@ -26,8 +24,6 @@ for(i in i:length(datasetNumericalWithoutDate)){
   if(dfExtremeEvent$DecInterpreter[i] == "extreme"){
     start <- dfExtremeEvent$DecStartIndex[i]
     end <- dfExtremeEvent$DecEndIndex[i]
-    print(start)
-    print(end)
     lines(x[start:end], y[start:end], col="red", lwd=2)
   }
   

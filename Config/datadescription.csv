@@ -1,6 +1,6 @@
 ColName,Type,Rule,Alternate
 DEWP,NA,NA,Dew Point
-TEMP,NA,NA,Temperature
+TEMP,NA,fuzzy,Temperature
 PRES,NA,NA,Pressure
 CBWD,NA,NA,Combined wind direction
 LWS,NA,NA,Cumulated wind speed

@@ -1,15 +1,21 @@
 setwd("~/GitHub/D2T_Apps")
 # INITIALIZING
-source("D2T_Machine.R", local = TRUE)
+# source("D2T_Machine.R", local = TRUE)
+source("UnspecificHandling.R", local = TRUE)
+source("SignalAnalysis.R", local = TRUE)
+source("DataInterpretation.R", local = TRUE)
+source("DocumentPlanning.R", local = TRUE)
+source("Microplanning.R", local = TRUE)
 
 #-----------------------
 # GENERAL DATA HANDLER |
 #-----------------------
 # Force read, with default parameter v2,v3,v4,etc if there's no header available
 
-filename <- "BeijingPM25#1"
+filename <- "CurrencyExchange#1"
 dataset <- as.data.frame(fread(file=paste0("DatasetsExperiment/",filename,".csv")))
 colnames(dataset)[1] <- "DateTime"
+dataTitle <- readChar("Config/datatitle.csv", file.info("Config/datatitle.csv")$size)
 
 # Dataset with datetime Column dropped
 datasetWithoutDate <- dataset[ , colnames(dataset) != "DateTime"]
@@ -169,9 +175,8 @@ for(i in i:length(datasetNumericalWithoutDate)){
 
 
 
-
-
-resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName)
+# STRUCTURE REALISATION
+resumeIntro <- ReadResumeIntro(dataset["DateTime"], columnName, dataTitle)
 trendIntro <- ReadIntro(type="Trend")
 resumeTrend <- paste0(trendIntro," ",ResumeTrend(statisticalResume))
 resumeComparsion <- ComparsionMessage(datasetNow, comparsionResult, datasetIntervalValue)
@@ -209,10 +214,8 @@ for(i in i:length(datasetNumericalWithoutDate)){
   vectorTrendDescriptionPredict[i] <- LD_Compare(vectorSequenceIndex)
 }
 
-# currentAglast <- TrendAnalysis(length(dataset)-5, dataset[[2]])
-# currentAgresume <- "and now is the higest from overall."
-#
 
+# STRUCTURE REALISATION
 predictIntro <- ReadPredictIntro(ReadIntro(type="Predict"))
 
 specialCorpus <- IsSpecialCorpusAvailable(interpreterPredict, columnNameNumerical)
@@ -220,11 +223,12 @@ if(!is.null(specialCorpus$Sentence)){
   predictIntro <- paste(predictIntro, specialCorpus$Sentence)
 }
 
+# STRUCTURE REALISATION
 predictContent <- PredictDesc(interpreterPredict,vectorTrendDescriptionPredict,datasetWithoutDate)
 predictResult <- paste(predictIntro, predictContent)
 
 
-
+# STRUCTURE REALISATION
 resumeResult <- PostProcessing(resumeResult)
 currentResult <- PostProcessing(currentResult)
 predictResult <- PostProcessing(predictResult)
