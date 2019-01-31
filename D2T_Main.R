@@ -1,18 +1,18 @@
 setwd("~/GitHub/D2T_Apps")
 # INITIALIZING
-# source("D2T_Machine.R", local = TRUE)
-source("UnspecificHandling.R", local = TRUE)
-source("SignalAnalysis.R", local = TRUE)
-source("DataInterpretation.R", local = TRUE)
-source("DocumentPlanning.R", local = TRUE)
-source("Microplanning.R", local = TRUE)
+source("D2T_Machine.R", local = TRUE)
+# source("UnspecificHandling.R", local = TRUE)
+# source("SignalAnalysis.R", local = TRUE)
+# source("DataInterpretation.R", local = TRUE)
+# source("DocumentPlanning.R", local = TRUE)
+# source("Microplanning.R", local = TRUE)
 
 #-----------------------
 # GENERAL DATA HANDLER |
 #-----------------------
 # Force read, with default parameter v2,v3,v4,etc if there's no header available
 
-filename <- "CurrencyExchange#1"
+filename <- "DataTest#1"
 dataset <- as.data.frame(fread(file=paste0("DatasetsExperiment/",filename,".csv")))
 colnames(dataset)[1] <- "DateTime"
 dataTitle <- readChar("Config/datatitle.csv", file.info("Config/datatitle.csv")$size)
@@ -51,7 +51,7 @@ if(length(catColName) != 0){
     colnames(datasetCategorical)[2] <- catColName
   }else{
     datasetCategoricalWithoutDate <- dataset[, colnames(dataset) %in% catColName]
-    datasetCategorical <- cbind(dataset["DateTime"], datasetCategorical)
+    datasetCategorical <- cbind(dataset["DateTime"], datasetCategoricalWithoutDate)
   }
 }
 

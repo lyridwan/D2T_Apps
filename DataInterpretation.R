@@ -719,8 +719,8 @@ ComparsionMessage <- function(data, result, interval){
     i<-1
     index <- 1
     for(i in i:length(result)){
-      if(result[i] == "equalwith"){
-        groupedParam1[index] <- names
+      if(result[i] == "equal with"){
+        groupedParam1[index] <- names(data[i])
         index <- index + 1
       }
     }
@@ -781,6 +781,8 @@ ComparsionMessage <- function(data, result, interval){
       s <- ""
     }else if(length(groupedParam3) == length(data)){
       groupedMsg2 <- "All"
+      tobe <- "are"
+      s <- "s"
     }else{
       tobe <- "are"
       s <- "s"

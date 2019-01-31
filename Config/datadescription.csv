@@ -1,8 +1,17 @@
 ColName,Type,Rule,Alternate
-DEWP,NA,NA,Dew Point
 TEMP,NA,fuzzy,Temperature
-PRES,NA,NA,Pressure
-CBWD,NA,NA,Combined wind direction
-LWS,NA,NA,Cumulated wind speed
-LS,NA,NA,Cumulated hours of snow
-LR,NA,NA,Cumulated hours of rain
+AirQuality,numeric,range,Air Quality
+WindSpeed,numeric,range,Wind Speed
+WindDirection,numeric,range,Wind Direction
+CloudCoverage,numeric,range,Cloud Coverage
+Temperature,numeric,fuzzy,NA
+Rainfall,numeric,fuzzy,NA
+USD,numeric,NA,U.S. Dollar
+JPY,numeric,NA,Japan Yen
+GBP,numeric,NA,Great British Pounds
+CHF,numeric,NA,Confoederatio Helvetica Franc
+SGD,numeric,NA,Singapore Dollar
+MYR,numeric,NA,Malaysian Ringgit
+HKD,numeric,NA,Hong Kong dollar
+AUD,numeric,NA,Australian Dollar
+CAD,numeric,NA,Canadian Dollar

@@ -7,24 +7,24 @@ for(i in i:length(datasetNumericalWithoutDate)){
   
   png(filename=paste0("Plot/",substr(filename, 1, nchar(filename)-2), i, col,".png"), width=500, height=500)
   
-  plot(main=col, xlab="Index", ylab="Value", y=y, x=x, type="l", lwd=1)
+  plot(main=col, xlab="Index", ylab="Value", y=y, x=x, type="o", lwd=1)
   
   # regression
   reg = lm(y~x)
-  abline(reg,col="yellow", lwd=2)
+  # abline(reg,col="yellow", lwd=2)
   
   # increase
   if(dfExtremeEvent$IncInterpreter[i] == "extreme"){
     start <- dfExtremeEvent$IncStartIndex[i]
     end <- dfExtremeEvent$IncEndIndex[i]
-    lines(x[start:end], y[start:end], col="green", lwd=2)
+    # lines(x[start:end], y[start:end], col="green", lwd=2)
   }
   
   # decrease
   if(dfExtremeEvent$DecInterpreter[i] == "extreme"){
     start <- dfExtremeEvent$DecStartIndex[i]
     end <- dfExtremeEvent$DecEndIndex[i]
-    lines(x[start:end], y[start:end], col="red", lwd=2)
+    # lines(x[start:end], y[start:end], col="red", lwd=2)
   }
   
   if(listRepeatedAnalysisResult[[i]]$RepValue != 0){

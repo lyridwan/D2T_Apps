@@ -856,15 +856,15 @@ DataInterpreterInterval <- function (interval, type = "default"){
       result <- "last week"
     #weekly data
     }else if(interval == 168){
-      result <- "last  month"
+      result <- "last month"
     #monthly data
     }else if(interval == 672 || interval == 696 || interval == 720 || 
              interval == 744 ){
-      result <- "last  year"
+      result <- "last year"
     #yearly data
     }else if(interval == 8760 || 
              interval == 8736){
-      result <- "last  quarter"
+      result <- "last quarter"
     }else{
       result <- ""
     }
@@ -3093,7 +3093,7 @@ ComparsionMessage <- function(data, result, interval){
     index <- 1
     for(i in i:length(result)){
       if(result[i] == "equalwith"){
-        groupedParam1[index] <- names
+        groupedParam1[index] <- names(data[i])
         index <- index + 1
       }
     }
@@ -3154,6 +3154,8 @@ ComparsionMessage <- function(data, result, interval){
       s <- ""
     }else if(length(groupedParam3) == length(data)){
       groupedMsg2 <- "All"
+      tobe <- "are"
+      s <- "s"
     }else{
       tobe <- "are"
       s <- "s"
